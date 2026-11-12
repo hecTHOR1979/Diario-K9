@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Diario K9">
-<link rel="manifest" href="/manifest.json">
-<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=9">
-<link rel="icon" type="image/png" sizes="192x192" href="/huella-k9-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="/huella-k9-512.png">
-<link rel="apple-touch-icon" href="/huella-k9-192.png">
+<link rel="manifest" href="./manifest.json">
+<link rel="shortcut icon" type="image/x-icon" href="./favicon.ico?v=9">
+<link rel="icon" type="image/png" sizes="192x192" href="./huella-k9-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./huella-k9-512.png">
+<link rel="apple-touch-icon" href="./huella-k9-192.png">
 <title>🐕 Diario K9 - Búsqueda y Rescate</title>
 <script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js" defer></script>
 <style>
@@ -22,7 +22,7 @@
   --border:#d1d5db; --text:#1f2937; --text-muted:#6b7280;
   --shadow:0 2px 8px rgba(0,0,0,.10); --shadow-lg:0 8px 32px rgba(0,0,0,.18);
   --radius:12px; --radius-sm:8px; --month-color:#1a5c38;
-  --r1:#22c55e; --r2:#86efac; --r3:#fbbf24; --r4:#f97316; --r5:#ef4444;
+  --r1:#22c55e; --r2:#16a34a; --r3:#f59e0b; --r4:#ea580c; --r5:#dc2626;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -31,27 +31,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* ── HEADER ─────────────────────────────────── */
 .app-header{background:var(--month-color);color:#fff;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-lg);transition:background .4s;padding-top:var(--safe-top)}
-.header-top{display:flex;align-items:center;gap:8px;padding:10px 14px;flex-wrap:wrap}
-.app-logo{font-size:1.6rem}
-.app-title{font-size:1rem;font-weight:700;flex:1;min-width:120px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.sync-pill{font-size:.7rem;font-weight:600;padding:3px 8px;border-radius:12px;background:rgba(0,0,0,.25);display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
-.sync-dot{width:8px;height:8px;border-radius:50%;background:#9ca3af;display:inline-block}
+.header-top{display:flex;align-items:center;gap:6px;padding:8px 14px;flex-wrap:wrap}
+.app-logo{font-size:1.6rem;display:flex;align-items:center;flex-shrink:0}
+.app-title{font-size:1rem;font-weight:700;flex:1;min-width:80px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.sync-pill{font-size:.7rem;font-weight:600;padding:3px 7px;border-radius:12px;background:rgba(0,0,0,.25);display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#9ca3af;display:inline-block;flex-shrink:0}
 .sync-dot.online{background:#4ade80;box-shadow:0 0 6px #4ade80}
 .sync-dot.syncing{background:#fbbf24;animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-.hbtn{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:var(--radius-sm);padding:7px 11px;cursor:pointer;font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:5px;transition:background .2s;white-space:nowrap;min-height:36px}
+.hbtn{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;font-size:.82rem;font-weight:600;display:inline-flex;align-items:center;gap:4px;transition:background .2s;white-space:nowrap;min-height:34px}
 .hbtn:hover{background:rgba(255,255,255,.3)}
 .hbtn.install-btn{background:#fbbf24;color:#1f2937;border-color:#f59e0b;font-weight:700}
-.header-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:0 14px 10px}
-.hsel{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:var(--radius-sm);padding:6px 9px;font-size:.85rem;cursor:pointer;outline:none;min-height:36px}
+.header-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0 14px 8px}
+.hsel{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:var(--radius-sm);padding:5px 8px;font-size:.85rem;cursor:pointer;outline:none;min-height:34px}
 .hsel option{color:var(--text);background:#fff}
-.nav-btn{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:var(--radius-sm);padding:5px 11px;cursor:pointer;font-size:.95rem;transition:background .2s;min-height:36px}
+.nav-btn{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:var(--radius-sm);padding:5px 10px;cursor:pointer;font-size:.9rem;transition:background .2s;min-height:34px}
 .nav-btn:hover{background:rgba(255,255,255,.3)}
 .month-title{color:rgba(255,255,255,.95);font-size:1rem;font-weight:700;white-space:nowrap}
 .color-lbl{color:rgba(255,255,255,.85);font-size:.78rem;white-space:nowrap}
-.color-inp{width:34px;height:34px;border:2px solid rgba(255,255,255,.45);border-radius:var(--radius-sm);cursor:pointer;background:none;padding:0}
-.mobile-view-toggle{display:inline-flex;margin-left:auto}
+.color-inp{width:34px;height:34px;border:2px solid rgba(255,255,255,.45);border-radius:var(--radius-sm);cursor:pointer;background:none;padding:0;flex-shrink:0}
+.mobile-view-toggle{display:inline-flex}
+.only-mobile-icon{display:none!important}
+
+/* Ocultar cualquier publicidad o badge inyectado por el servidor (Powered by Netlify) */
+body > *:not(#appHeader):not(#mobileDogBar):not(.app-layout):not(.modal-overlay):not(#lightbox):not(#toast):not(script):not(style):not(link),
+iframe[src*="netlify"],
+a[href*="netlify"],
+div[id*="netlify"],
+div[class*="netlify"],
+[data-netlify-deploy-drawer] {
+  display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;height:0!important;width:0!important;position:fixed!important;top:-9999px!important;left:-9999px!important;z-index:-9999!important;
+}
 
 /* ── LAYOUT ─────────────────────────────────── */
 .app-layout{display:flex;min-height:calc(100vh - 115px)}
@@ -69,7 +80,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .icon-btn:hover{opacity:1}
 .add-dog-btn{display:flex;align-items:center;justify-content:center;gap:5px;padding:10px;border:2px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer;color:var(--text-muted);font-size:.84rem;background:none;width:100%;transition:all .2s}
 .add-dog-btn:hover{border-color:var(--primary);color:var(--primary)}
-.main-content{flex:1;padding:14px;overflow-x:auto}
+.main-content{flex:1;min-width:0;padding:14px;overflow-x:auto}
 
 /* ── MOBILE / TABLET DOG BAR ─────────────────── */
 .mobile-dog-bar{display:none;overflow-x:auto;gap:8px;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);align-items:center}
@@ -92,10 +103,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .btn-danger{background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;border-radius:var(--radius);padding:9px 18px;font-size:.88rem;font-weight:600;cursor:pointer}
 
 /* ── CALENDAR ────────────────────────────────── */
-.calendar-container{max-width:1360px;margin:0 auto}
-.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.calendar-container{max-width:1360px;margin:0 auto;width:100%}
+.calendar-scroll-wrap{width:100%;overflow-x:auto;padding-bottom:10px;-webkit-overflow-scrolling:touch}
+.calendar-scroll-wrap::-webkit-scrollbar,.main-content::-webkit-scrollbar{height:12px;width:12px}
+.calendar-scroll-wrap::-webkit-scrollbar-track,.main-content::-webkit-scrollbar-track{background:#e2e8f0;border-radius:6px}
+.calendar-scroll-wrap::-webkit-scrollbar-thumb,.main-content::-webkit-scrollbar-thumb{background:var(--month-color);border-radius:6px;border:2px solid #e2e8f0;cursor:grab}
+.calendar-scroll-wrap::-webkit-scrollbar-thumb:active{cursor:grabbing}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(128px,1fr));gap:5px;min-width:920px}
 .cal-header-cell{background:var(--month-color);color:#fff;text-align:center;padding:9px 3px;font-size:.78rem;font-weight:700;border-radius:var(--radius-sm);text-transform:uppercase;letter-spacing:.05em;transition:background .4s}
-.day-cell{background:var(--surface);border-radius:var(--radius-sm);padding:7px;min-height:105px;border:1.5px solid transparent;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:4px}
+.day-cell{background:var(--surface);border-radius:var(--radius-sm);padding:6px;min-height:108px;max-height:175px;overflow-y:auto;min-width:0;border:1.5px solid transparent;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:4px;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent}
+.day-cell::-webkit-scrollbar{width:4px}
+.day-cell::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px}
+.day-cell::-webkit-scrollbar-thumb:hover{background:#94a3b8}
 .day-cell:hover{border-color:var(--primary-light);box-shadow:var(--shadow)}
 .day-cell.other-month{background:#f1f5f2;opacity:.45;cursor:default}
 .day-cell.other-month:hover{border-color:transparent;box-shadow:none}
@@ -107,67 +126,114 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .day-cell:hover .day-add-btn{opacity:1}
 
 /* ── AGENDA VIEW (Lista / Cuadrícula en móvil, tablet y PC) ───── */
-.calendar-grid.agenda-mode{display:flex;flex-direction:column;gap:8px}
+.calendar-grid.agenda-mode{display:flex;flex-direction:column;gap:8px;min-width:0!important}
 .calendar-grid.agenda-mode .cal-header-cell{display:none}
 .calendar-grid.agenda-mode .day-cell.other-month{display:none}
-.calendar-grid.agenda-mode .day-cell{min-height:auto;padding:10px 14px}
+.calendar-grid.agenda-mode .day-cell{min-height:auto;max-height:none;padding:10px 14px;overflow-y:visible}
 .calendar-grid.agenda-mode .day-cell:not(.has-data):not(.today){min-height:auto;padding:7px 14px;opacity:.75}
 .calendar-grid.agenda-mode .day-add-btn{opacity:1;width:24px;height:24px;font-size:.8rem}
-.calendar-grid.agenda-mode .sess-mini{font-size:.8rem;padding:6px 10px;border-left-width:4px}
+.calendar-grid.agenda-mode .sess-mini{font-size:.8rem;padding:0}
 .calendar-grid.agenda-mode .sess-mini-row.extra-detail{display:flex}
 
 /* ── SESSION PREVIEW in Calendar ─────────────── */
-.sess-mini{font-size:.69rem;border-radius:5px;padding:3px 5px;border-left:3.5px solid #ccc;background:#f1f5f2;display:flex;flex-direction:column;gap:1px;overflow:hidden}
-.sess-mini-row{display:flex;align-items:center;gap:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sess-mini-row span{overflow:hidden;text-overflow:ellipsis}
-.rating-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
-.rating-pill-mini{font-size:.6rem;font-weight:700;padding:0 4px;border-radius:3px;color:#fff;flex-shrink:0}
+.sess-mini{font-size:.69rem;border-radius:6px;padding:0;border:1px solid rgba(0,0,0,.08);background:#fff;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:all .15s}
+.sess-mini:hover{box-shadow:0 2px 6px rgba(0,0,0,.12);transform:translateY(-1px)}
+.sess-tarea-badge{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:3px 6px;font-weight:700;font-size:.72rem;line-height:1.2}
+.sess-tarea-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess-has-file{font-size:.62rem;background:rgba(255,255,255,.3);padding:0 4px;border-radius:3px;flex-shrink:0}
+.sess-mini-body{padding:3px 6px;display:flex;flex-direction:column;gap:2px;background:#f8faf9}
+.sess-modalidad{font-size:.62rem;font-weight:600;color:var(--primary);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess-meta-row{display:flex;align-items:center;gap:4px;font-size:.72rem;line-height:1.2}
+.sess-weather-icons{display:inline-flex;align-items:center;gap:2px;flex-shrink:0}
+.sess-lugar-mini{font-size:.6rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.sess-notas-mini{font-size:.6rem;color:var(--text-muted);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sess-more{font-size:.62rem;color:var(--text-muted);text-align:right;margin-top:2px}
-.sess-has-file{font-size:.6rem;color:#7c3aed;flex-shrink:0}
 
 /* ── MODALS ──────────────────────────────────── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:1000;display:flex;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(2px)}
 .modal-overlay.hidden{display:none}
-.modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:100%;max-width:660px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
-.modal-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--month-color);color:#fff;transition:background .4s}
+.modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:100%;max-width:660px;height:min(88vh,720px);max-height:88vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--month-color);color:#fff;transition:background .4s;flex-shrink:0}
 .modal-title{font-size:1.05rem;font-weight:700}
+.btn-toggle-all{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:var(--radius-sm);padding:5px 10px;font-size:.75rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-toggle-all:hover{background:rgba(255,255,255,.35)}
 .modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;cursor:pointer;font-size:1.1rem;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s}
 .modal-close:hover{background:rgba(255,255,255,.4)}
-.modal-body{overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
-.modal-footer{padding:12px 18px calc(12px + var(--safe-bottom));border-top:1px solid var(--border);display:flex;gap:9px;justify-content:flex-end;background:var(--surface2)}
+.modal-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 26px;display:flex;flex-direction:column;gap:14px;flex:1 1 auto;min-height:0;scrollbar-width:thin;scrollbar-color:var(--month-color,#1a5c38) #e2e8f0}
+.modal-body::-webkit-scrollbar{width:10px}
+.modal-body::-webkit-scrollbar-track{background:#f1f5f9;border-radius:6px}
+.modal-body::-webkit-scrollbar-thumb{background:var(--month-color,#1a5c38);border-radius:6px;border:2px solid #f1f5f9}
+.modal-body::-webkit-scrollbar-thumb:hover{background:#14462b}
+.modal-footer{padding:12px 18px calc(12px + var(--safe-bottom));border-top:1px solid var(--border);display:flex;gap:9px;justify-content:flex-end;background:var(--surface2);flex-shrink:0}
 
 /* ── SESSION CARD ────────────────────────────── */
-.session-card{border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface2)}
-.session-card-header{display:flex;align-items:center;gap:9px;padding:10px 13px;background:var(--surface);border-bottom:1px solid var(--border);cursor:pointer}
+.session-card{border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface2);display:flex;flex-direction:column}
+.session-card-header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface);border-bottom:1.5px solid var(--border);cursor:pointer;flex-shrink:0}
 .session-num{background:var(--month-color);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:700;flex-shrink:0;transition:background .4s}
 .session-card-title{flex:1;font-size:.88rem;font-weight:600}
+.session-expand-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:.72rem;font-weight:600;color:var(--text-muted);padding:3px 7px;transition:all .2s;white-space:nowrap}
+.session-expand-btn:hover{border-color:var(--primary);color:var(--primary);background:rgba(0,0,0,.04)}
 .session-toggle{font-size:.78rem;color:var(--text-muted)}
 .session-del-btn{background:none;border:none;cursor:pointer;font-size:1rem;color:#ef4444;padding:4px;opacity:.7;transition:opacity .2s}
 .session-del-btn:hover{opacity:1}
-.session-fields{padding:13px;display:flex;flex-direction:column;gap:10px}
+
+/* BARRA DE DESPLAZAMIENTO DENTRO DE LA SESIÓN */
+.session-fields{padding:14px 16px;display:flex;flex-direction:column;gap:11px;max-height:50vh;overflow-y:scroll!important;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--month-color,#1a5c38) #e2e8f0;border-top:1px solid var(--border)}
+.session-fields::-webkit-scrollbar{width:8px}
+.session-fields::-webkit-scrollbar-track{background:#f1f5f9;border-radius:4px}
+.session-fields::-webkit-scrollbar-thumb{background:var(--month-color,#1a5c38);border-radius:4px}
+.session-fields::-webkit-scrollbar-thumb:hover{background:#14462b}
 .session-fields.collapsed{display:none}
+.session-fields.full-height{max-height:none!important;overflow-y:visible!important}
+
 .field-row{display:grid;grid-template-columns:95px 1fr;gap:8px;align-items:start}
 .field-label{font-size:.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;padding-top:9px}
 .field-select,.field-textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;font-size:.86rem;color:var(--text);background:var(--surface);outline:none;transition:border-color .2s;font-family:inherit;min-height:40px}
 .field-select:focus,.field-textarea:focus{border-color:var(--primary)}
-.field-textarea{resize:none;overflow:hidden;min-height:60px;line-height:1.5}
+.field-textarea{resize:vertical;overflow-y:auto;min-height:75px;max-height:220px;line-height:1.5;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#64748b #f1f5f9}
+.field-textarea::-webkit-scrollbar{width:8px}
+.field-textarea::-webkit-scrollbar-track{background:#f1f5f9;border-radius:4px}
+.field-textarea::-webkit-scrollbar-thumb{background:#64748b;border-radius:4px}
+.field-textarea::-webkit-scrollbar-thumb:hover{background:#475569}
 
-/* ── CUSTOM SELECT WRAPPER ───────────────────── */
+/* ── CUSTOM SELECT WITH EMOJI PICKER ────────── */
 .custom-sel-wrap{position:relative;width:100%}
 .custom-sel-wrap select{width:100%;appearance:auto}
-.add-opt-row{display:flex;gap:5px;margin-top:5px}
-.add-opt-input{flex:1;border:1.5px solid var(--primary);border-radius:var(--radius-sm);padding:7px 9px;font-size:.84rem;outline:none;font-family:inherit}
-.add-opt-confirm{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:7px 12px;cursor:pointer;font-size:.84rem;font-weight:700}
+.add-opt-box{display:flex;flex-direction:column;gap:6px;margin-top:6px;padding:8px;background:var(--surface);border:1.5px solid var(--primary);border-radius:var(--radius-sm);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.add-opt-row{display:flex;gap:6px;align-items:center}
+.add-opt-icon-btn{background:#f1f5f9;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:4px 8px;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;gap:3px;flex-shrink:0;transition:all .2s;min-height:36px}
+.add-opt-icon-btn:hover{border-color:var(--primary);background:#e2e8f0}
+.add-opt-input{flex:1;min-width:0;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:.85rem;outline:none;font-family:inherit}
+.add-opt-input:focus{border-color:var(--primary)}
+.add-opt-confirm{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:7px 12px;cursor:pointer;font-size:.85rem;font-weight:700}
+.add-opt-confirm:hover{background:var(--primary-light)}
+.add-opt-cancel{background:#f1f5f9;color:var(--text-muted);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;cursor:pointer;font-size:.85rem}
+.add-opt-palette{display:flex;flex-direction:column;gap:4px;padding-top:4px;border-top:1px dashed var(--border)}
+.palette-title{font-size:.68rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.palette-emojis{display:flex;gap:4px;flex-wrap:wrap}
+.emoji-chip{font-size:1.15rem;padding:3px 6px;border-radius:6px;cursor:pointer;background:#f8faf9;border:1px solid var(--border);transition:all .15s;user-select:none}
+.emoji-chip:hover,.emoji-chip.selected{background:#e8f5ed;border-color:var(--primary);transform:scale(1.15)}
+
+/* ── PARTICIPANTES ─────────────────────────── */
+.participants-field-wrap{display:flex;flex-direction:column;gap:6px;width:100%}
+.participant-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:28px;align-items:center}
+.participant-chip{display:inline-flex;align-items:center;gap:5px;background:#e8f5ed;color:var(--primary);border:1px solid #c2e2cf;border-radius:14px;padding:3px 9px;font-size:.78rem;font-weight:600}
+.participant-chip-name{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.participant-chip-del{background:none;border:none;color:var(--primary);cursor:pointer;font-size:.85rem;line-height:1;padding:0 2px;opacity:.7;transition:all .15s}
+.participant-chip-del:hover{opacity:1;color:#dc2626;transform:scale(1.2)}
+.no-participants-hint{font-size:.75rem;color:var(--text-muted);font-style:italic}
+.participant-select{cursor:pointer}
+.sess-participantes-mini{color:var(--text-muted);font-size:.66rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ── RATING ──────────────────────────────────── */
 .rating-row{display:flex;gap:5px;flex-wrap:wrap}
 .rating-opt{flex:1;min-width:62px;padding:7px 4px;border:2px solid transparent;border-radius:var(--radius-sm);cursor:pointer;font-size:.72rem;font-weight:700;text-align:center;transition:all .2s;opacity:.45;background:#f1f5f1}
 .rating-opt.selected{opacity:1;border-color:rgba(0,0,0,.3)}
-.rating-opt[data-val="muy-bien"]{color:#166534}.rating-opt[data-val="muy-bien"].selected{background:var(--r1);color:#fff}
-.rating-opt[data-val="bien"]{color:#166534}.rating-opt[data-val="bien"].selected{background:var(--r2);color:#166534}
-.rating-opt[data-val="regular"]{color:#92400e}.rating-opt[data-val="regular"].selected{background:var(--r3);color:#92400e}
-.rating-opt[data-val="mal"]{color:#9a3412}.rating-opt[data-val="mal"].selected{background:var(--r4);color:#fff}
-.rating-opt[data-val="muy-mal"]{color:#991b1b}.rating-opt[data-val="muy-mal"].selected{background:var(--r5);color:#fff}
+.rating-opt[data-val="muy-bien"]{color:#15803d}.rating-opt[data-val="muy-bien"].selected{background:var(--r1);color:#fff}
+.rating-opt[data-val="bien"]{color:#166534}.rating-opt[data-val="bien"].selected{background:var(--r2);color:#fff}
+.rating-opt[data-val="regular"]{color:#b45309}.rating-opt[data-val="regular"].selected{background:var(--r3);color:#fff}
+.rating-opt[data-val="mal"]{color:#c2410c}.rating-opt[data-val="mal"].selected{background:var(--r4);color:#fff}
+.rating-opt[data-val="muy-mal"]{color:#b91c1c}.rating-opt[data-val="muy-mal"].selected{background:var(--r5);color:#fff}
 
 /* ── FILE UPLOAD ─────────────────────────────── */
 .file-section{display:flex;flex-direction:column;gap:7px}
@@ -259,8 +325,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* 1) REDMI PAD 2 PRO (12.1", 16:10 -> ~800px a 1360px) */
 @media (min-width: 720px) and (max-width: 1366px) {
   .sidebar{width:200px;padding:12px}
-  .main-content{padding:12px}
-  .calendar-grid{gap:5px}
+  .main-content{padding:12px;overflow-x:auto}
+  .calendar-scroll-wrap{overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+  .calendar-grid:not(.agenda-mode){gap:5px;grid-template-columns:repeat(7,minmax(115px,1fr))!important;min-width:820px!important}
   .day-cell{min-height:112px;padding:7px}
   .day-add-btn{opacity:.85;width:22px;height:22px}
   .sess-mini{font-size:.71rem;padding:4px 6px}
@@ -275,29 +342,47 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* 2) REDMI NOTE 13 PRO Y MÓVILES (<= 719px, pantalla 20:9 ~393x873px) */
 @media (max-width: 719px) {
   .sidebar{display:none}
-  .mobile-dog-bar{display:flex}
+  .mobile-dog-bar{display:flex;padding:5px 8px;gap:6px}
+  .mobile-dog-chip{padding:4px 10px;min-height:32px;font-size:.78rem}
   .mobile-view-toggle{display:inline-flex}
-  .main-content{padding:6px}
-  .header-top{padding:8px 10px;gap:6px}
-  .app-title{font-size:.9rem}
-  .hbtn{padding:5px 8px;font-size:.75rem;min-height:34px}
-  .header-controls{padding:0 10px 8px;gap:5px}
-  .hsel{padding:4px 7px;font-size:.78rem;min-height:34px}
-  .nav-btn{padding:4px 9px;min-height:34px}
-  .month-title{font-size:.88rem}
-  .calendar-grid{gap:3px}
+  .hide-on-mobile{display:none!important}
+  .only-mobile-icon{display:inline!important}
+  .main-content{padding:6px;overflow-x:auto}
+  .calendar-scroll-wrap{overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+  .calendar-grid:not(.agenda-mode){gap:3px;grid-template-columns:repeat(7,minmax(82px,1fr))!important;min-width:580px!important}
   .cal-header-cell{font-size:.65rem;padding:6px 1px}
-  .day-cell{min-height:76px;padding:3px}
+  .day-cell{min-height:76px;max-height:140px;overflow-y:auto;padding:3px}
   .day-number{font-size:.72rem}
-  .sess-mini{font-size:.58rem;padding:2px 3px;border-left-width:2.5px}
+  .sess-mini{font-size:.58rem;padding:3px 3px;border-left-width:3px;gap:2px}
+  .sess-line-1{font-size:.66rem}
+  .sess-dur-badge{font-size:.56rem;padding:0 3px}
+  .sess-modalidad{font-size:.58rem}
+  .sess-line-3{font-size:.62rem}
+  .sess-weather-icons{font-size:.68rem}
+  .sess-rating-badge{font-size:.56rem;padding:1px 4px}
   .sess-mini-row.extra-detail{display:none}
-  .calendar-grid.agenda-mode .sess-mini{font-size:.78rem;padding:6px 8px;border-left-width:4px}
+  .calendar-grid.agenda-mode .sess-mini{font-size:.78rem;padding:6px 8px;border-left-width:4px;gap:3px}
   .calendar-grid.agenda-mode .sess-mini-row.extra-detail{display:flex}
+  .calendar-grid.agenda-mode .sess-line-1{font-size:.85rem}
+  .calendar-grid.agenda-mode .sess-dur-badge{font-size:.68rem;padding:1px 5px}
+  .calendar-grid.agenda-mode .sess-modalidad{font-size:.74rem}
+  .calendar-grid.agenda-mode .sess-weather-icons{font-size:.82rem}
+  .calendar-grid.agenda-mode .sess-rating-badge{font-size:.7rem;padding:2px 7px}
   .field-row{grid-template-columns:1fr;gap:3px}
   .field-label{padding-top:2px;font-size:.7rem}
   .modal-overlay{padding:0;align-items:flex-end}
-  .modal{max-height:94vh;border-radius:16px 16px 0 0}
+  .modal{height:92vh;max-height:92vh;border-radius:16px 16px 0 0}
+  .session-fields{max-height:54vh}
   .pdf-options,.summary-grid{grid-template-columns:1fr}
+}
+
+/* En PC con ratón: scroll horizontal fluido */
+@media (hover: hover) and (pointer: fine) and (min-width: 720px) {
+  .calendar-scroll-wrap{overflow-x:auto}
+  .calendar-grid:not(.agenda-mode){grid-template-columns:repeat(7,minmax(128px,1fr))!important;min-width:920px!important;gap:5px}
+  .day-cell{min-height:105px;padding:7px}
+  .sess-mini{font-size:.69rem;padding:4px 5px}
+  .sess-mini-row.extra-detail{display:flex!important}
 }
 
 @media (min-width: 1367px) {
@@ -311,9 +396,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   .print-only-header{display:flex!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body{background:#fff;font-size:11px}
   .app-layout{display:block}
-  .main-content{padding:0;overflow:visible}
+  .main-content,.calendar-scroll-wrap{padding:0;overflow:visible!important}
   .calendar-container{max-width:100%}
-  .calendar-grid.agenda-mode{display:grid!important;grid-template-columns:repeat(7,1fr)!important}
+  .calendar-grid,.calendar-grid.agenda-mode{display:grid!important;grid-template-columns:repeat(7,1fr)!important;min-width:0!important}
   .calendar-grid.agenda-mode .cal-header-cell{display:block!important}
   .calendar-grid.agenda-mode .day-cell.other-month{display:flex!important}
   .day-cell{break-inside:avoid;border:1px solid #cbd5e1!important;min-height:70px;padding:4px}
@@ -347,10 +432,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <span id="syncStatusText">Sincronizar</span>
       </span>
     </div>
-    <button class="hbtn" id="fullscreenBtn" onclick="toggleFullScreen()" title="Pantalla completa sin barra de dirección">⛶ Pantalla</button>
-    <button class="hbtn" onclick="openDogModal()">➕ Perro</button>
-    <button class="hbtn" onclick="openSyncModal()">🔄 Sincronizar</button>
+    <button class="hbtn hide-on-mobile" id="fullscreenBtn" onclick="toggleFullScreen()" title="Pantalla completa">⛶ Pantalla</button>
+    <button class="hbtn hide-on-mobile" onclick="openDogModal()">➕ Perro</button>
+    <button class="hbtn" onclick="openSyncModal()" title="Sincronizar"><span class="hide-on-mobile">🔄 Sincronizar</span><span style="display:inline" class="only-mobile-icon">🔄</span></button>
     <button class="hbtn" onclick="openPdfModal()">📄 PDF</button>
+    <span class="color-lbl">Color:</span>
+    <input type="color" class="color-inp" id="monthColorPicker" value="#1a5c38" onchange="onColorChange(this.value)" title="Color del mes">
+    <button class="hbtn mobile-view-toggle" id="viewModeBtn" onclick="toggleMobileViewMode()">📋 Lista</button>
   </div>
   <div class="header-controls">
     <button class="nav-btn" onclick="changeMonth(-1)">◀</button>
@@ -364,10 +452,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </select>
     <select class="hsel" id="yearSelect" onchange="onMonthChange()"></select>
     <button class="nav-btn" onclick="changeMonth(1)">▶</button>
-    <button class="hbtn" id="todayBtn" onclick="goToToday()" title="Ir a la fecha actual" style="margin-right:auto">📍 Hoy</button>
-    <span class="color-lbl">Color:</span>
-    <input type="color" class="color-inp" id="monthColorPicker" value="#1a5c38" onchange="onColorChange(this.value)">
-    <button class="hbtn mobile-view-toggle" id="viewModeBtn" onclick="toggleMobileViewMode()">📋 Lista</button>
+    <button class="hbtn" id="todayBtn" onclick="goToToday()" title="Ir a la fecha actual">📍 Hoy</button>
   </div>
 </header>
 
@@ -390,7 +475,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
     <div id="calendarContainer" class="calendar-container hidden">
       <div id="printHeader" class="print-only-header"></div>
-      <div class="calendar-grid" id="calendarGrid"></div>
+      <div class="calendar-scroll-wrap" id="calendarScrollWrap">
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </div>
       <div id="monthlySummaryContainer" class="monthly-summary"></div>
     </div>
   </main>
@@ -410,7 +497,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <div class="modal-title" id="dayModalTitle">Día</div>
         <div style="font-size:.78rem;opacity:.85" id="dayModalDog"></div>
       </div>
-      <button class="modal-close" onclick="closeDayModal()">✕</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn-toggle-all" id="toggleAllSessionsBtn" onclick="toggleAllSessions()" title="Desplegar o plegar todas las sesiones" style="display:none">⇕ Plegar todas</button>
+        <button class="modal-close" onclick="closeDayModal()">✕</button>
+      </div>
     </div>
     <div class="modal-body" id="dayModalBody"></div>
     <div class="modal-footer">
@@ -487,12 +577,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
       <!-- REALTIME AUTO SYNC -->
       <div class="sync-section highlight">
-        <div class="sync-section-title">⚡ Sincronización Automática en Tiempo Real (Nube + Red Local)</div>
-        <p>Escribe el <strong>mismo Código de Equipo</strong> en tu <strong>PC</strong>, en la <strong>Redmi Pad 2 Pro</strong> y en el <strong>Redmi Note 13 Pro</strong>. Al modificar cualquier dato en uno, se actualizará automáticamente en todos los demás.</p>
+        <div class="sync-section-title">⚡ Sincronización en la Nube (PC, Tablet y Móvil)</div>
+        <p>Escribe el <strong>mismo Código de Equipo</strong> en tu <strong>PC</strong>, en la <strong>Redmi Pad 2 Pro</strong> y en el <strong>Redmi Note 13 Pro</strong>. Funciona con cualquier Wi‑Fi o con datos móviles (4G/5G).</p>
         <div class="sync-btn-row">
-          <input type="text" class="sync-room-input" id="syncRoomInput" placeholder="Ej: UCAR-HECTOR-K9">
-          <button class="btn-sync green" onclick="saveSyncRoom()">🔗 Conectar y Sincronizar</button>
-          <button class="btn-sync blue" onclick="forcePushSync()" title="Enviar mis datos ahora">⬆️ Enviar ahora</button>
+          <input type="text" class="sync-room-input" id="syncRoomInput" placeholder="Ej: UCAR-K9-SYNC">
+          <button class="btn-sync green" onclick="saveSyncRoom()">🔗 Conectar</button>
+          <button class="btn-sync blue" onclick="forcePullSync()" title="Descargar todos los datos de la nube">⬇️ Descargar de la Nube</button>
+          <button class="btn-sync amber" onclick="forcePushSync()" title="Subir los datos de este dispositivo a la nube">⬆️ Subir a la Nube</button>
+          <button class="btn-sync gray" onclick="forceAppUpdate()" title="Actualizar app y limpiar caché">🔄 Recargar App</button>
         </div>
         <div id="liveSyncStatusMsg" style="font-size:.78rem;color:#166534;font-weight:600"></div>
       </div>
@@ -602,13 +694,15 @@ const DEFAULT_MODALIDADES=['Práctica obligatoria','Formación obligatoria','Ent
 const DEFAULT_DURACIONES=['15 min','30 min','45 min','1 h','1 h 30 min','2 h','2 h 30 min','3 h','Más de 3 h'];
 const DEFAULT_LUGARES=['Campo abierto','Bosque','Zona urbana','Zona de ruinas','Agua / Río','Centro de entrenamiento','Montaña','Playa','Otro'];
 const DEFAULT_TIEMPOS=['☀️ Soleado','⛅ Nublado','🌧️ Lluvia','🌩️ Tormenta','❄️ Nieve','💨 Viento fuerte','🌫️ Niebla','🥵 Calor extremo','🥶 Frío extremo'];
+const DEFAULT_VIENTOS=['💨 A favor','🌬️ En contra','↔️ De costado','🌀 Cambiante / Remolinos','🍃 Brisa suave','🌪️ Racheado fuerte','🧘 Calma / Sin viento'];
+const DEFAULT_PARTICIPANTES=[];
 
 const RATINGS=[
   {val:'muy-bien',label:'Muy bien',color:'#22c55e',textColor:'#fff'},
-  {val:'bien',label:'Bien',color:'#86efac',textColor:'#166534'},
-  {val:'regular',label:'Regular',color:'#fbbf24',textColor:'#92400e'},
-  {val:'mal',label:'Mal',color:'#f97316',textColor:'#fff'},
-  {val:'muy-mal',label:'Muy mal',color:'#ef4444',textColor:'#fff'}
+  {val:'bien',label:'Bien',color:'#16a34a',textColor:'#fff'},
+  {val:'regular',label:'Regular',color:'#f59e0b',textColor:'#fff'},
+  {val:'mal',label:'Mal',color:'#ea580c',textColor:'#fff'},
+  {val:'muy-mal',label:'Muy mal',color:'#dc2626',textColor:'#fff'}
 ];
 
 // ════════════════════════════════════════════════
@@ -618,7 +712,7 @@ let state = {
   dogs: [],
   sessions: {},            // key: dogId_YYYY-MM-DD → array of session objects
   monthColors: {},         // key: YYYY-MM → hex
-  customOptions: { tarea:[], modalidad:[], duracion:[], lugar:[], tiempo:[] },
+  customOptions: { tarea:[], modalidad:[], duracion:[], lugar:[], tiempo:[], viento:[], participantes:[] },
   monthlyImprovements: {}, // key: dogId_YYYY-MM → manual summary string
   updatedAt: 0,            // timestamp of last modification for auto-sync
   currentDogId: null,
@@ -666,7 +760,9 @@ function loadAll() {
       modalidad: loadedOpts.modalidad || [],
       duracion: loadedOpts.duracion || [],
       lugar: loadedOpts.lugar || [],
-      tiempo: loadedOpts.tiempo || []
+      tiempo: loadedOpts.tiempo || [],
+      viento: loadedOpts.viento || [],
+      participantes: loadedOpts.participantes || []
     };
     state.monthlyImprovements = JSON.parse(localStorage.getItem('k9_monthlyImprovements') || '{}');
     state.updatedAt = parseInt(localStorage.getItem('k9_updatedAt') || '0', 10);
@@ -699,33 +795,33 @@ function getSyncPayload() {
   };
 }
 
-function applyRemotePayload(data, sourceLabel) {
+function applyRemotePayload(data, sourceLabel, force = false) {
   if (!data || !Array.isArray(data.dogs) || !data.sessions) return;
-  if (data.deviceId === DEVICE_ID) return;
+  if (!force && data.deviceId === DEVICE_ID) return;
   const incomingTime = data.updatedAt || 0;
-  // Si el estado remoto es más antiguo que el nuestro y ya tenemos perros, ignorar
-  if (incomingTime > 0 && state.updatedAt > 0 && incomingTime <= state.updatedAt && state.dogs.length > 0) {
+  if (!force && incomingTime > 0 && state.updatedAt > 0 && incomingTime <= state.updatedAt && state.dogs.length > 0) {
     return;
   }
-  // Si el remoto está vacío pero nosotros tenemos datos, enviamos los nuestros
-  if (data.dogs.length === 0 && state.dogs.length > 0) {
+  if (!force && data.dogs.length === 0 && state.dogs.length > 0) {
     pushRealtimeSync();
     return;
   }
 
   isApplyingRemote = true;
   state.dogs = data.dogs;
-  state.sessions = data.sessions;
+  state.sessions = data.sessions || {};
   state.monthColors = data.monthColors || {};
   state.customOptions = {
     tarea: data.customOptions?.tarea || [],
     modalidad: data.customOptions?.modalidad || [],
     duracion: data.customOptions?.duracion || [],
     lugar: data.customOptions?.lugar || [],
-    tiempo: data.customOptions?.tiempo || []
+    tiempo: data.customOptions?.tiempo || [],
+    viento: data.customOptions?.viento || [],
+    participantes: data.customOptions?.participantes || []
   };
   state.monthlyImprovements = data.monthlyImprovements || {};
-  state.updatedAt = incomingTime || Date.now();
+  state.updatedAt = Math.max(incomingTime, state.updatedAt || 0, Date.now());
   if (!state.currentDogId || !state.dogs.find(d => d.id === state.currentDogId)) {
     state.currentDogId = state.dogs[0]?.id || null;
   }
@@ -737,40 +833,107 @@ function applyRemotePayload(data, sourceLabel) {
     renderDaySessions();
   }
   isApplyingRemote = false;
-  setSyncStatus('online', 'Sincronizado ✓');
-  showToast(`🔄 Actualizado desde ${sourceLabel || 'otro dispositivo'}`);
+  setSyncStatus('online', `En vivo (${syncRoom})`);
+  if (!force) showToast(`🔄 Actualizado desde ${sourceLabel || 'otro dispositivo'}`);
 }
 
-// 1) Sincronización por Servidor Local (Wi-Fi / LAN) si está disponible
-async function pollLocalServerSync() {
-  if (location.protocol === 'file:') return;
+// 1) Sincronización en la Nube HTTPS (Puerto 443 - funciona en cualquier Wi-Fi y 4G/5G)
+const CLOUD_SYNC_API = 'https://diario-k9-rescate.netlify.app/api/sync';
+
+async function forcePullSync() {
+  const cleanRoom = (syncRoom || 'UCAR-K9-SYNC').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'UCAR-K9-SYNC';
+  setSyncStatus('syncing', 'Descargando...');
+  showToast('⬇️ Descargando de la nube...');
   try {
-    const res = await fetch('/api/sync', { cache: 'no-store' });
-    if (!res.ok) return;
+    const res = await fetch(`${CLOUD_SYNC_API}?room=${encodeURIComponent(cleanRoom)}&t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    if (data && data.updatedAt && data.updatedAt > (state.updatedAt || 0)) {
-      applyRemotePayload(data, 'Wi-Fi Local');
-    } else if ((!data || !data.updatedAt) && state.dogs.length > 0) {
-      pushLocalServerSync();
+    if (!data || !Array.isArray(data.dogs) || data.dogs.length === 0) {
+      showToast('ℹ️ No hay perros guardados en la nube para este canal.');
+      setSyncStatus('online', `En vivo (${cleanRoom})`);
+      return;
     }
-  } catch (e) {}
+    applyRemotePayload(data, 'Nube K9', true);
+    showToast(`✅ ¡Listo! ${data.dogs.length} perro(s) y sus sesiones cargados.`);
+  } catch (e) {
+    showToast('❌ Error de conexión con la nube: ' + e.message);
+    setSyncStatus('', 'Error conexión');
+  }
+}
+
+async function forcePushSync() {
+  const cleanRoom = (syncRoom || 'UCAR-K9-SYNC').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'UCAR-K9-SYNC';
+  setSyncStatus('syncing', 'Subiendo...');
+  showToast('⬆️ Subiendo datos a la nube...');
+  state.updatedAt = Date.now();
+  await pushLocalServerSync();
+  if (mqttClient && mqttClient.connected) {
+    try {
+      mqttClient.publish('diariok9/v3/sync/' + cleanRoom, JSON.stringify({ ping: true, deviceId: DEVICE_ID, updatedAt: state.updatedAt }), { qos: 1 });
+    } catch(e) {}
+  }
+  showToast('✅ Datos guardados y subidos a la nube');
+}
+
+async function pollLocalServerSync() {
+  const cleanRoom = (syncRoom || 'UCAR-K9-SYNC').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'UCAR-K9-SYNC';
+  const urls = [`${CLOUD_SYNC_API}?room=${encodeURIComponent(cleanRoom)}&t=${Date.now()}`];
+  if (location.protocol !== 'file:' && location.hostname !== 'diario-k9-rescate.netlify.app') {
+    urls.push(`/api/sync?room=${encodeURIComponent(cleanRoom)}&t=${Date.now()}`);
+  }
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) continue;
+      const data = await res.json();
+      setSyncStatus('online', `En vivo (${cleanRoom})`);
+      const msgEl = document.getElementById('liveSyncStatusMsg');
+      if (msgEl) msgEl.textContent = `🟢 Conectado en la nube al canal "${cleanRoom}" (funciona en cualquier Wi‑Fi o 4G/5G).`;
+      if (data && Array.isArray(data.dogs) && data.dogs.length > 0) {
+        if (state.dogs.length === 0) {
+          applyRemotePayload(data, 'Nube K9', true);
+        } else if (data.updatedAt && data.updatedAt > (state.updatedAt || 0) && data.deviceId !== DEVICE_ID) {
+          applyRemotePayload(data, 'Nube K9', false);
+        }
+      } else if ((data?.empty || !data?.dogs || data.dogs.length === 0) && state.dogs.length > 0) {
+        pushLocalServerSync();
+      }
+      return;
+    } catch (e) {}
+  }
 }
 
 async function pushLocalServerSync() {
-  if (location.protocol === 'file:') return;
-  try {
-    await fetch('/api/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(getSyncPayload())
-    });
-  } catch (e) {}
+  const cleanRoom = (syncRoom || 'UCAR-K9-SYNC').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'UCAR-K9-SYNC';
+  const payloadStr = JSON.stringify({ ...getSyncPayload(), syncRoom: cleanRoom });
+  const urls = [`${CLOUD_SYNC_API}?room=${encodeURIComponent(cleanRoom)}`];
+  if (location.protocol !== 'file:' && location.hostname !== 'diario-k9-rescate.netlify.app') {
+    urls.push(`/api/sync?room=${encodeURIComponent(cleanRoom)}`);
+  }
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payloadStr
+      });
+      if (res.ok) {
+        const resData = await res.json().catch(() => null);
+        if (resData && resData.updatedAt) {
+          state.updatedAt = resData.updatedAt;
+          localStorage.setItem('k9_updatedAt', String(state.updatedAt));
+        }
+        setSyncStatus('online', `En vivo (${cleanRoom})`);
+      }
+    } catch (e) {}
+  }
 }
 
-// 2) Sincronización en Tiempo Real en la Nube (MQTT sobre WebSockets con mensaje retenido)
+// 2) Notificación instantánea entre dispositivos + respaldo en Nube HTTPS
 function initCloudRealtimeSync() {
   if (!syncRoom) return;
-  const topic = 'diariok9/v3/sync/' + syncRoom.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+  const cleanRoom = syncRoom.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'UCAR-K9-SYNC';
+  const topic = 'diariok9/v3/sync/' + cleanRoom;
   setSyncStatus('syncing', 'Conectando...');
 
   if (typeof mqtt === 'undefined') {
@@ -786,59 +949,59 @@ function initCloudRealtimeSync() {
       clientId: 'k9_' + DEVICE_ID,
       clean: true,
       connectTimeout: 8000,
-      reconnectPeriod: 4000
+      reconnectPeriod: 6000
     });
 
     mqttClient.on('connect', () => {
-      setSyncStatus('online', `En vivo (${syncRoom})`);
+      setSyncStatus('online', `En vivo (${cleanRoom})`);
       const msgEl = document.getElementById('liveSyncStatusMsg');
-      if (msgEl) msgEl.textContent = `🟢 Conectado en tiempo real al canal "${syncRoom}". Cualquier cambio se sincroniza al instante.`;
+      if (msgEl) msgEl.textContent = `🟢 Conectado en tiempo real al canal "${cleanRoom}". Cualquier cambio se sincroniza al instante.`;
       mqttClient.subscribe(topic, { qos: 1 });
     });
 
     mqttClient.on('message', (t, payload) => {
       try {
         const data = JSON.parse(payload.toString());
-        applyRemotePayload(data, 'Nube K9');
+        if (data.ping) {
+          if (data.deviceId !== DEVICE_ID) setTimeout(pollLocalServerSync, 150);
+        } else {
+          applyRemotePayload(data, 'Nube K9');
+        }
       } catch (e) {}
     });
 
-    mqttClient.on('offline', () => setSyncStatus('', 'Modo local'));
-    mqttClient.on('error', () => setSyncStatus('', 'Modo local'));
+    mqttClient.on('offline', () => pollLocalServerSync());
+    mqttClient.on('error', () => pollLocalServerSync());
   } catch (e) {
-    setSyncStatus('', 'Modo local');
+    pollLocalServerSync();
   }
 }
 
 function pushRealtimeSync() {
+  const cleanRoom = (syncRoom || 'UCAR-K9-SYNC').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'UCAR-K9-SYNC';
   setSyncStatus('syncing', 'Sincronizando...');
-  pushLocalServerSync();
-  if (mqttClient && mqttClient.connected && syncRoom) {
-    const topic = 'diariok9/v3/sync/' + syncRoom.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
-    try {
-      mqttClient.publish(topic, JSON.stringify(getSyncPayload()), { qos: 1, retain: true }, () => {
-        setSyncStatus('online', `En vivo (${syncRoom})`);
-      });
-      return;
-    } catch (e) {}
-  }
-  setTimeout(() => setSyncStatus(mqttClient?.connected ? 'online' : '', mqttClient?.connected ? `En vivo (${syncRoom})` : 'Guardado local'), 400);
+  pushLocalServerSync().then(() => {
+    if (mqttClient && mqttClient.connected && syncRoom) {
+      const topic = 'diariok9/v3/sync/' + cleanRoom;
+      try {
+        const fullJson = JSON.stringify(getSyncPayload());
+        const msg = fullJson.length < 28000 ? fullJson : JSON.stringify({ ping: true, deviceId: DEVICE_ID, updatedAt: state.updatedAt });
+        mqttClient.publish(topic, msg, { qos: 1, retain: fullJson.length < 28000 }, () => {
+          setSyncStatus('online', `En vivo (${cleanRoom})`);
+        });
+      } catch (e) {}
+    }
+  });
 }
 
-function saveSyncRoom() {
+async function saveSyncRoom() {
   const val = document.getElementById('syncRoomInput').value.trim().toUpperCase();
   if (!val) { showToast('Escribe un código de equipo'); return; }
   syncRoom = val;
   localStorage.setItem('k9_syncRoom', syncRoom);
   initCloudRealtimeSync();
-  setTimeout(() => forcePushSync(), 900);
-  showToast(`🔗 Canal "${syncRoom}" activado`);
-}
-
-function forcePushSync() {
-  state.updatedAt = Date.now();
-  saveAll(false);
-  showToast('⬆️ Datos enviados a todos tus dispositivos');
+  showToast(`🔗 Conectando a "${syncRoom}"...`);
+  await forcePullSync();
 }
 
 // ════════════════════════════════════════════════
@@ -999,15 +1162,69 @@ async function installPWA() {
   }
 }
 
+// Redirigir automáticamente si la tablet o móvil abre uno de los enlaces antiguos de prueba de Netlify
+if (location.hostname.endsWith('.netlify.app') && location.hostname !== 'diario-k9-rescate.netlify.app') {
+  location.replace('https://diario-k9-rescate.netlify.app/');
+}
+
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     if ('caches' in window) {
-      caches.keys().then(keys => keys.forEach(k => { if (k !== 'diario-k9-v13') caches.delete(k); }));
+      caches.keys().then(keys => keys.forEach(k => { if (k !== 'diario-k9-v26') caches.delete(k); }));
     }
-    navigator.serviceWorker.register('/sw.js?v=13', { updateViaCache: 'none' })
-      .then(reg => reg.update())
+    navigator.serviceWorker.register('./sw.js?v=26', { updateViaCache: 'none' })
+      .then(reg => {
+        reg.update();
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showToast('🚀 Nueva versión instalada. Recargando...');
+                setTimeout(() => window.location.reload(), 800);
+              }
+            });
+          }
+        });
+      })
       .catch(() => {});
   });
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}
+
+async function forceAppUpdate() {
+  showToast('🔄 Actualizando app y limpiando caché...');
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const reg of regs) { await reg.unregister(); }
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      for (const k of keys) { await caches.delete(k); }
+    }
+  } catch (e) {}
+  setTimeout(() => {
+    window.location.href = window.location.origin + window.location.pathname + '?reload=' + Date.now();
+  }, 400);
+}
+
+// Eliminar cualquier cookie de sesión de Netlify y cualquier etiqueta externa inyectada (ej. Powered by Netlify)
+try {
+  ['nf_jwt', '_nf_jwt', 'netlify_ab', 'nf_auth'].forEach(c => {
+    document.cookie = `${c}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    document.cookie = `${c}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.netlify.app;`;
+  });
+} catch (e) {}
+
+function removeInjectedBadges() {
+  document.querySelectorAll('iframe, [data-netlify-deploy-drawer], .netlify-badge, [id*="netlify-feedback"]').forEach(el => el.remove());
+}
+removeInjectedBadges();
+if (typeof MutationObserver !== 'undefined') {
+  new MutationObserver(removeInjectedBadges).observe(document.documentElement, { childList: true, subtree: true });
 }
 
 // ════════════════════════════════════════════════
@@ -1026,6 +1243,13 @@ function init() {
   initCloudRealtimeSync();
   pollLocalServerSync();
   setInterval(pollLocalServerSync, 4000);
+  window.addEventListener('focus', pollLocalServerSync);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') pollLocalServerSync();
+  });
+  if (state.dogs.length === 0 || Object.keys(state.sessions).length === 0) {
+    setTimeout(forcePullSync, 450);
+  }
 }
 
 function populateYearSelect() {
@@ -1102,11 +1326,15 @@ function changeMonth(dir) {
 //  CUSTOM OPTIONS
 // ════════════════════════════════════════════════
 function getOptions(field) {
-  const defaults = { tarea:DEFAULT_TAREAS, modalidad:DEFAULT_MODALIDADES, duracion:DEFAULT_DURACIONES, lugar:DEFAULT_LUGARES, tiempo:DEFAULT_TIEMPOS };
+  const defaults = { tarea:DEFAULT_TAREAS, modalidad:DEFAULT_MODALIDADES, duracion:DEFAULT_DURACIONES, lugar:DEFAULT_LUGARES, tiempo:DEFAULT_TIEMPOS, viento:DEFAULT_VIENTOS, participantes:DEFAULT_PARTICIPANTES };
   return [...(defaults[field]||[]), ...(state.customOptions[field]||[])];
 }
-function addCustomOption(field, currentVal, selectEl, inputEl) {
-  const val = inputEl.value.trim();
+const FIELD_EMOJIS = {
+  tiempo: ['☀️','⛅','🌧️','🌩️','❄️','🌫️','💨','🥵','🥶','🌈','☔','🌪️'],
+  viento: ['💨','🌬️','↔️','🌀','🍃','🌪️','🧘','⚡','🧭','🌊','🌾']
+};
+
+function addCustomOption(field, val, selectEl) {
   if (!val) return;
   if (!state.customOptions[field]) state.customOptions[field] = [];
   if (!state.customOptions[field].includes(val) && !getOptions(field).includes(val)) {
@@ -1121,45 +1349,257 @@ function addCustomOption(field, currentVal, selectEl, inputEl) {
     selectEl.insertBefore(opt, selectEl.lastElementChild);
     selectEl.value = val;
   }
-  inputEl.closest('.add-opt-row').classList.add('hidden');
-  inputEl.value='';
   selectEl.dispatchEvent(new Event('change'));
 }
 
 function buildSelectHTML(field, currentVal, idx) {
   const opts = getOptions(field);
+  const emojis = FIELD_EMOJIS[field] || null;
+  const defaultEmoji = emojis ? emojis[0] : '';
   return `<div class="custom-sel-wrap">
     <select class="field-select" data-field="${field}" data-idx="${idx}" onchange="onSelectChange(this,'${field}',${idx})">
       <option value="">— Seleccionar —</option>
       ${opts.map(o=>`<option value="${o}"${currentVal===o?' selected':''}>${o}</option>`).join('')}
       <option value="__add__">➕ Añadir nueva opción...</option>
     </select>
-    <div class="add-opt-row hidden" id="addOptRow_${field}_${idx}">
-      <input class="add-opt-input" type="text" placeholder="Nueva opción..." id="addOptInput_${field}_${idx}"
-        onkeydown="if(event.key==='Enter'){confirmAddOpt('${field}',${idx})}">
-      <button class="add-opt-confirm" onclick="confirmAddOpt('${field}',${idx})">✓</button>
+    <div class="add-opt-box hidden" id="addOptBox_${field}_${idx}">
+      <div class="add-opt-row">
+        ${emojis ? `<button type="button" class="add-opt-icon-btn" id="addOptIconBtn_${field}_${idx}"
+          onclick="toggleEmojiPalette('${field}',${idx})" title="Elegir icono">
+          <span id="addOptIconVal_${field}_${idx}">${defaultEmoji}</span> ▾
+        </button>` : ''}
+        <input class="add-opt-input" type="text" placeholder="Nombre de la opción..." id="addOptInput_${field}_${idx}"
+          onkeydown="if(event.key==='Enter'){confirmAddOpt('${field}',${idx})}">
+        <button class="add-opt-confirm" onclick="confirmAddOpt('${field}',${idx})" title="Guardar">✓</button>
+        <button class="add-opt-cancel" onclick="cancelAddOpt('${field}',${idx})" title="Cancelar">✕</button>
+      </div>
+      ${emojis ? `<div class="add-opt-palette" id="addOptPalette_${field}_${idx}">
+        <span class="palette-title">Toca un icono para asignarlo:</span>
+        <div class="palette-emojis">
+          ${emojis.map((em, i) => `<span class="emoji-chip${i===0?' selected':''}" onclick="selectOptEmoji('${field}',${idx},'${em}')">${em}</span>`).join('')}
+        </div>
+      </div>` : ''}
     </div>
   </div>`;
 }
+
 function onSelectChange(sel, field, idx) {
   if (sel.value === '__add__') {
     sel.value = getSessions()[idx][field] || '';
-    const row = document.getElementById(`addOptRow_${field}_${idx}`);
-    row.classList.remove('hidden');
-    document.getElementById(`addOptInput_${field}_${idx}`).focus();
+    const box = document.getElementById(`addOptBox_${field}_${idx}`);
+    if (box) {
+      box.classList.remove('hidden');
+      const inp = document.getElementById(`addOptInput_${field}_${idx}`);
+      if (inp) { inp.value = ''; inp.focus(); }
+    }
     return;
   }
   getSessions()[idx][field] = sel.value;
   if (field==='tarea' || field==='modalidad') updateSessionCardTitle(idx);
   saveAll();
 }
+
+function toggleEmojiPalette(field, idx) {
+  const pal = document.getElementById(`addOptPalette_${field}_${idx}`);
+  if (pal) pal.classList.toggle('hidden');
+}
+
+function selectOptEmoji(field, idx, emoji) {
+  const iconEl = document.getElementById(`addOptIconVal_${field}_${idx}`);
+  if (iconEl) iconEl.textContent = emoji;
+  const pal = document.getElementById(`addOptPalette_${field}_${idx}`);
+  if (pal) {
+    pal.querySelectorAll('.emoji-chip').forEach(c => c.classList.toggle('selected', c.textContent.trim() === emoji));
+  }
+}
+
+function cancelAddOpt(field, idx) {
+  const box = document.getElementById(`addOptBox_${field}_${idx}`);
+  if (box) box.classList.add('hidden');
+  const selEl = document.querySelector(`[data-field="${field}"][data-idx="${idx}"]`);
+  if (selEl) selEl.value = getSessions()[idx][field] || '';
+}
+
 function confirmAddOpt(field, idx) {
   const inputEl = document.getElementById(`addOptInput_${field}_${idx}`);
+  const iconEl = document.getElementById(`addOptIconVal_${field}_${idx}`);
   const selEl = document.querySelector(`[data-field="${field}"][data-idx="${idx}"]`);
-  addCustomOption(field, getSessions()[idx][field], selEl, inputEl);
-  getSessions()[idx][field] = selEl.value;
-  if (field==='tarea' || field==='modalidad') updateSessionCardTitle(idx);
+  if (!inputEl || !selEl) return;
+  const text = inputEl.value.trim();
+  if (!text) {
+    showToast('Escribe un nombre para la opción');
+    inputEl.focus();
+    return;
+  }
+  const allowIcon = Boolean(FIELD_EMOJIS[field]);
+  const chosenIcon = (allowIcon && iconEl) ? iconEl.textContent.trim() : '';
+  const startsWithEmoji = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation}|[\u2600-\u27BF\uFE0F])/u.test(text);
+  const finalVal = (chosenIcon && !startsWithEmoji) ? `${chosenIcon} ${text}` : text;
+  addCustomOption(field, finalVal, selEl);
+  getSessions()[idx][field] = finalVal;
+  if (field === 'tarea' || field === 'modalidad') updateSessionCardTitle(idx);
   saveAll();
+  cancelAddOpt(field, idx);
+  showToast(`Añadido: ${finalVal} ✓`);
+}
+
+// ════════════════════════════════════════════════
+//  PARTICIPANTS (MULTI-SELECT & STATS)
+// ════════════════════════════════════════════════
+function escapeHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function renderParticipantChips(list, idx) {
+  const arr = Array.isArray(list) ? list : [];
+  if (arr.length === 0) {
+    return `<span class="no-participants-hint">Sin participantes asignados</span>`;
+  }
+  return arr.map(p => `
+    <span class="participant-chip">
+      <span class="participant-chip-name">${escapeHtml(p)}</span>
+      <button type="button" class="participant-chip-del" onclick="removeParticipantFromSession(${idx},'${escapeHtml(p).replace(/'/g, "\\'")}')" title="Quitar de esta sesión">✕</button>
+    </span>
+  `).join('');
+}
+
+function buildParticipantsHTML(currentList, idx) {
+  const assigned = Array.isArray(currentList) ? currentList : [];
+  const allOpts = getOptions('participantes');
+  const available = allOpts.filter(p => !assigned.includes(p));
+
+  return `<div class="participants-field-wrap">
+    <div class="participant-chips" id="partChips_${idx}">
+      ${renderParticipantChips(assigned, idx)}
+    </div>
+    <div class="custom-sel-wrap">
+      <select class="field-select participant-select" data-idx="${idx}" onchange="onParticipantSelectChange(this, ${idx})">
+        <option value="">➕ Añadir participante a la sesión...</option>
+        ${available.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}
+        <option value="__add__">✏️ Nuevo participante...</option>
+        ${(state.customOptions.participantes && state.customOptions.participantes.length > 0) ? `<option value="__manage__">⚙️ Gestionar / borrar participante del listado...</option>` : ''}
+      </select>
+      <div class="add-opt-box hidden" id="addOptBox_participantes_${idx}">
+        <div class="add-opt-row">
+          <input class="add-opt-input" type="text" placeholder="Nombre del participante (ej. Guía, Figurante...)" id="addOptInput_participantes_${idx}"
+            onkeydown="if(event.key==='Enter'){confirmAddParticipant(${idx})}">
+          <button class="add-opt-confirm" onclick="confirmAddParticipant(${idx})" title="Guardar">✓</button>
+          <button class="add-opt-cancel" onclick="cancelAddParticipant(${idx})" title="Cancelar">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function onParticipantSelectChange(sel, idx) {
+  const val = sel.value;
+  if (!val) return;
+  if (val === '__add__') {
+    sel.value = '';
+    const box = document.getElementById(`addOptBox_participantes_${idx}`);
+    if (box) {
+      box.classList.remove('hidden');
+      const inp = document.getElementById(`addOptInput_participantes_${idx}`);
+      if (inp) { inp.value = ''; inp.focus(); }
+    }
+    return;
+  }
+  if (val === '__manage__') {
+    sel.value = '';
+    manageParticipants();
+    return;
+  }
+  addParticipantToSession(idx, val);
+  sel.value = '';
+}
+
+function confirmAddParticipant(idx) {
+  const inp = document.getElementById(`addOptInput_participantes_${idx}`);
+  if (!inp) return;
+  const val = inp.value.trim();
+  if (val) {
+    if (!state.customOptions.participantes) state.customOptions.participantes = [];
+    if (!state.customOptions.participantes.includes(val) && !DEFAULT_PARTICIPANTES.includes(val)) {
+      state.customOptions.participantes.push(val);
+    }
+    addParticipantToSession(idx, val);
+    showToast(`Participante "${val}" añadido ✓`);
+  }
+  cancelAddParticipant(idx);
+}
+
+function cancelAddParticipant(idx) {
+  const box = document.getElementById(`addOptBox_participantes_${idx}`);
+  if (box) box.classList.add('hidden');
+  const selEl = document.querySelector(`select.participant-select[data-idx="${idx}"]`);
+  if (selEl) selEl.value = '';
+}
+
+function addParticipantToSession(idx, name) {
+  const sessions = getSessions();
+  const sess = sessions[idx];
+  if (!sess) return;
+  if (!Array.isArray(sess.participantes)) sess.participantes = [];
+  if (!sess.participantes.includes(name)) {
+    sess.participantes.push(name);
+    saveAll();
+    refreshParticipantUI(idx);
+    renderMonthlySummary();
+  }
+}
+
+function removeParticipantFromSession(idx, name) {
+  const sessions = getSessions();
+  const sess = sessions[idx];
+  if (!sess || !Array.isArray(sess.participantes)) return;
+  sess.participantes = sess.participantes.filter(p => p !== name);
+  saveAll();
+  refreshParticipantUI(idx);
+  renderMonthlySummary();
+}
+
+function refreshParticipantUI(idx) {
+  const sessions = getSessions();
+  const sess = sessions[idx];
+  if (!sess) return;
+  const chipsEl = document.getElementById(`partChips_${idx}`);
+  if (chipsEl) {
+    chipsEl.innerHTML = renderParticipantChips(sess.participantes, idx);
+  }
+  const selEl = document.querySelector(`select.participant-select[data-idx="${idx}"]`);
+  if (selEl) {
+    const assigned = Array.isArray(sess.participantes) ? sess.participantes : [];
+    const available = getOptions('participantes').filter(p => !assigned.includes(p));
+    selEl.innerHTML = `
+      <option value="">➕ Añadir participante a la sesión...</option>
+      ${available.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}
+      <option value="__add__">✏️ Nuevo participante...</option>
+      ${(state.customOptions.participantes && state.customOptions.participantes.length > 0) ? `<option value="__manage__">⚙️ Gestionar / borrar participante del listado...</option>` : ''}
+    `;
+    selEl.value = '';
+  }
+}
+
+function manageParticipants() {
+  const custom = state.customOptions.participantes || [];
+  if (custom.length === 0) {
+    showToast('No hay participantes personalizados en el listado');
+    return;
+  }
+  const toDelete = prompt(`Escribe el nombre del participante que deseas eliminar del listado global:\n\nListado actual:\n${custom.join(', ')}`);
+  if (!toDelete) return;
+  const trimmed = toDelete.trim();
+  if (custom.includes(trimmed)) {
+    state.customOptions.participantes = custom.filter(p => p !== trimmed);
+    saveAll();
+    const sessions = getSessions();
+    sessions.forEach((_, i) => refreshParticipantUI(i));
+    renderMonthlySummary();
+    showToast(`Participante "${trimmed}" eliminado ✓`);
+  } else {
+    showToast(`No se encontró "${trimmed}"`);
+  }
 }
 
 // ════════════════════════════════════════════════
@@ -1215,6 +1655,33 @@ function formatDate(date){
 }
 function getRatingInfo(val){ return RATINGS.find(r=>r.val===val)||{color:'#d1d5db',label:'',textColor:'#fff'}; }
 
+function extractEmojiOrShort(str) {
+  if (!str) return '';
+  const s = String(str).trim();
+  const emojiMatch = s.match(/^(\p{Extended_Pictographic}|\p{Emoji_Presentation}|[\u2600-\u27BF\uFE0F])+/u);
+  if (emojiMatch) return emojiMatch[0];
+  const anyEmoji = s.match(/(\p{Extended_Pictographic}|\p{Emoji_Presentation}|[\u2600-\u27BF\uFE0F])/u);
+  if (anyEmoji) return anyEmoji[0];
+  const lower = s.toLowerCase();
+  if (lower.includes('sol') || lower.includes('despejado')) return '☀️';
+  if (lower.includes('nub')) return '⛅';
+  if (lower.includes('lluv')) return '🌧️';
+  if (lower.includes('torm')) return '🌩️';
+  if (lower.includes('niev')) return '❄️';
+  if (lower.includes('nieb')) return '🌫️';
+  if (lower.includes('calor')) return '🥵';
+  if (lower.includes('frio') || lower.includes('frío')) return '🥶';
+  if (lower.includes('calma')) return '🧘';
+  if (lower.includes('favor')) return '💨';
+  if (lower.includes('contra')) return '🌬️';
+  if (lower.includes('costado') || lower.includes('cruz')) return '↔️';
+  if (lower.includes('remol') || lower.includes('cambi')) return '🌀';
+  if (lower.includes('brisa')) return '🍃';
+  if (lower.includes('rach')) return '🌪️';
+  if (lower.includes('viento')) return '💨';
+  return s.slice(0, 3);
+}
+
 function renderCalendar() {
   const grid=document.getElementById('calendarGrid');
   grid.innerHTML='';
@@ -1253,29 +1720,46 @@ function renderCalendar() {
     }
     cell.appendChild(numRow);
 
-    const MAX_VISIBLE = state.mobileAgendaMode ? 10 : 3;
+    const MAX_VISIBLE = state.mobileAgendaMode ? 15 : 8;
     sessions.slice(0,MAX_VISIBLE).forEach(s=>{
       const ri=getRatingInfo(s.rating);
       const mini=document.createElement('div');
       mini.className='sess-mini';
-      mini.style.borderLeftColor=ri.color||'#ccc';
       const hasFiles=s.files&&s.files.length>0;
 
+      const tIcon = extractEmojiOrShort(s.tiempo);
+      const vIcon = extractEmojiOrShort(s.viento);
+      const hasWeather = Boolean(tIcon || vIcon);
+
+      const ratingBg = ri.color || '#64748b';
+      const ratingText = ri.textColor || '#fff';
+      const tooltipTitle = `${s.tarea||'Sesión'}${ri.label?' · Valoración: '+ri.label:''}${s.duracion?' ('+s.duracion+')':''}`;
+
       let rows='';
-      rows+=`<div class="sess-mini-row">
-        <span class="rating-dot" style="background:${ri.color}"></span>
-        <span style="font-weight:700;flex:1">${s.tarea||'—'}</span>
-        ${ri.label?`<span class="rating-pill-mini" style="background:${ri.color};color:${ri.textColor}">${ri.label}</span>`:''}
-        ${hasFiles?`<span class="sess-has-file">📎${s.files.length}</span>`:''}
+      // 1) Cabecera de la TAREA: Fondo pintado con el color de la valoración
+      rows+=`<div class="sess-tarea-badge" style="background:${ratingBg};color:${ratingText}" title="${tooltipTitle}">
+        <span class="sess-tarea-title">${s.tarea||'Sesión'}</span>
+        ${hasFiles?`<span class="sess-has-file" title="${s.files.length} archivo(s)">📎${s.files.length}</span>`:''}
       </div>`;
-      if(s.modalidad) rows+=`<div class="sess-mini-row extra-detail" style="color:var(--primary);font-weight:600"><span>🏷️ ${s.modalidad}</span></div>`;
-      if(s.duracion||s.tiempo) rows+=`<div class="sess-mini-row" style="color:var(--text-muted)">
-        ${s.duracion?`<span>⏱ ${s.duracion}</span>`:''}
-        ${s.duracion&&s.tiempo?'<span>·</span>':''}
-        ${s.tiempo?`<span>${s.tiempo}</span>`:''}
-      </div>`;
-      if(s.lugar) rows+=`<div class="sess-mini-row extra-detail" style="color:var(--text-muted)"><span>📍 ${s.lugar}</span></div>`;
-      if(s.notas) rows+=`<div class="sess-mini-row extra-detail" style="color:var(--text-muted);font-style:italic"><span>${s.notas.slice(0,45)}${s.notas.length>45?'…':''}</span></div>`;
+
+      // 2) Cuerpo de la sesión: Modalidad, iconos de tiempo y viento, y lugar
+      rows+=`<div class="sess-mini-body">`;
+      if(s.modalidad){
+        rows+=`<div class="sess-modalidad" title="Modalidad: ${s.modalidad}">🏷️ ${s.modalidad}</div>`;
+      }
+      if(hasWeather || s.lugar){
+        rows+=`<div class="sess-meta-row">
+          ${hasWeather?`<span class="sess-weather-icons" title="Tiempo: ${s.tiempo||'—'} · Viento: ${s.viento||'—'}">${tIcon?`<span>${tIcon}</span>`:''}${vIcon?`<span style="margin-left:2px">${vIcon}</span>`:''}</span>`:''}
+          ${s.lugar?`<span class="sess-lugar-mini" title="Lugar: ${s.lugar}">📍 ${s.lugar}</span>`:''}
+        </div>`;
+      }
+      if(s.participantes && s.participantes.length > 0){
+        rows+=`<div class="sess-participantes-mini extra-detail" title="Participantes: ${escapeHtml(s.participantes.join(', '))}">👥 ${escapeHtml(s.participantes.join(', '))}</div>`;
+      }
+      if(s.notas){
+        rows+=`<div class="sess-notas-mini extra-detail" title="Notas: ${s.notas}">📝 ${s.notas}</div>`;
+      }
+      rows+=`</div>`;
 
       mini.innerHTML=rows;
       cell.appendChild(mini);
@@ -1292,6 +1776,18 @@ function renderCalendar() {
   }
   renderPrintHeader();
   renderMonthlySummary();
+  setTimeout(syncCalendarScrollbars, 30);
+}
+
+function syncCalendarScrollbars() {
+  const wrap = document.getElementById('calendarScrollWrap');
+  if (!wrap || wrap.dataset.scrollBound) return;
+  wrap.dataset.scrollBound = '1';
+  wrap.addEventListener('wheel', (e) => {
+    if (e.shiftKey) {
+      wrap.scrollLeft += e.deltaY;
+    }
+  }, { passive: true });
 }
 
 // ════════════════════════════════════════════════
@@ -1333,6 +1829,11 @@ function onManualImprovementChange(val) {
   saveAll();
 }
 
+function isLibreModalidad(mod) {
+  if (!mod) return false;
+  return mod.toLowerCase().includes('libre');
+}
+
 function computeMonthlyStats() {
   const year = state.currentYear, month = state.currentMonth;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -1340,6 +1841,9 @@ function computeMonthlyStats() {
   const byModalidad = {};
   let totalMinutes = 0;
   let totalSessions = 0;
+  let totalEligibleSessions = 0; // sesiones totales en todas las modalidades menos en los libres
+  const participantCounts = {};  // participante -> asistencias en modalidades elegibles (no libres)
+  const monthParticipantSet = new Set();
   const improvementItems = [];
   const allNotes = [];
 
@@ -1353,6 +1857,20 @@ function computeMonthlyStats() {
       totalSessions++;
       const mins = parseDurationToMinutes(s.duracion);
       totalMinutes += mins;
+
+      const isLibre = isLibreModalidad(s.modalidad);
+      if (!isLibre) {
+        totalEligibleSessions++;
+      }
+
+      const pList = Array.isArray(s.participantes) ? s.participantes : [];
+      pList.forEach(p => {
+        if (!p) return;
+        monthParticipantSet.add(p);
+        if (!isLibre) {
+          participantCounts[p] = (participantCounts[p] || 0) + 1;
+        }
+      });
 
       const tKey = s.tarea || 'Sin especificar';
       if (!byTarea[tKey]) byTarea[tKey] = { count: 0, mins: 0 };
@@ -1395,9 +1913,25 @@ function computeMonthlyStats() {
     .map(([name, v]) => ({ name, count: v.count, mins: v.mins, pct: totalMinutes > 0 ? Math.round((v.mins / totalMinutes) * 100) : 0 }))
     .sort((a, b) => b.mins - a.mins || b.count - a.count);
 
+  const allKnownParticipants = [...new Set([...(state.customOptions.participantes || []), ...Array.from(monthParticipantSet)])];
+  const participantList = allKnownParticipants.map(name => {
+    const attended = participantCounts[name] || 0;
+    const total = totalEligibleSessions;
+    const pct = total > 0 ? Math.round((attended / total) * 100) : 0;
+    return {
+      name,
+      attended,
+      total,
+      fraction: `${attended}/${total}`,
+      pct
+    };
+  }).sort((a, b) => b.attended - a.attended || b.pct - a.pct || a.name.localeCompare(b.name));
+
   return {
     totalMinutes,
     totalSessions,
+    totalEligibleSessions,
+    participantList,
     tareaList,
     modalidadList,
     improvementItems,
@@ -1465,6 +1999,25 @@ function buildSummaryHTML(stats, isPrintWindow = false) {
       </tr>`
     : `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:12px">Sin registros este mes</td></tr>`;
 
+  const participantRows = (stats.participantList && stats.participantList.length > 0)
+    ? stats.participantList.map(p => `
+      <tr>
+        <td>
+          <div style="font-weight:600">👤 ${escapeHtml(p.name)}</div>
+          <div class="summary-bar-wrap"><div class="summary-bar-fill" style="width:${p.pct}%"></div></div>
+        </td>
+        <td style="text-align:center;font-weight:600">${p.attended}</td>
+        <td style="text-align:center;font-weight:800;color:var(--primary);font-size:.92rem">${p.fraction}</td>
+        <td style="text-align:right;font-weight:700">${p.pct}%</td>
+      </tr>`).join('') + `
+      <tr class="total-row">
+        <td>Total Sesiones Computables (no libres)</td>
+        <td style="text-align:center">${stats.totalEligibleSessions}</td>
+        <td style="text-align:center">${stats.totalEligibleSessions}/${stats.totalEligibleSessions}</td>
+        <td style="text-align:right">100%</td>
+      </tr>`
+    : `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:14px">Sin participantes registrados este mes</td></tr>`;
+
   const itemsToShow = stats.improvementItems.length > 0 ? stats.improvementItems : stats.allNotes;
   let improveListHTML = '';
   if (itemsToShow.length > 0) {
@@ -1497,6 +2050,7 @@ function buildSummaryHTML(stats, isPrintWindow = false) {
       <h3>📊 Resumen Mensual — ${MONTHS[state.currentMonth]} ${state.currentYear}</h3>
       <div class="summary-kpi-row">
         <span>🐾 ${stats.totalSessions} sesiones</span>
+        <span>🏷️ ${stats.totalEligibleSessions} no libres</span>
         <span>⏱️ Tiempo total: ${formatMinutes(stats.totalMinutes)}</span>
       </div>
     </div>
@@ -1514,6 +2068,19 @@ function buildSummaryHTML(stats, isPrintWindow = false) {
           <thead><tr><th>Modalidad</th><th style="text-align:center">Ses.</th><th style="text-align:right">Tiempo</th><th style="text-align:right">%</th></tr></thead>
           <tbody>${modalidadRows}</tbody>
         </table>
+      </div>
+      <div class="summary-card full-width">
+        <div class="summary-card-title">
+          <span>👥 Asistencia de PARTICIPANTES (todas las modalidades excepto libres)</span>
+          <span>${stats.totalEligibleSessions} sesión${stats.totalEligibleSessions===1?'':'es'} computable${stats.totalEligibleSessions===1?'':'s'}</span>
+        </div>
+        <table class="summary-table">
+          <thead><tr><th>Participante</th><th style="text-align:center">Ses. Asistidas</th><th style="text-align:center">Fracción Asistencia</th><th style="text-align:right">% Asistencia</th></tr></thead>
+          <tbody>${participantRows}</tbody>
+        </table>
+        <div style="font-size:.73rem;color:var(--text-muted);font-style:italic;margin-top:2px">
+          ℹ️ La fracción indica las sesiones a las que asistió cada participante sobre el total realizadas en el mes excluyendo los Entrenamientos libres (${stats.totalEligibleSessions} sesiones).
+        </div>
       </div>
       <div class="summary-card full-width">
         <div class="summary-card-title">
@@ -1566,29 +2133,35 @@ function renderDaySessions() {
   const sessions=getSessions();
   if(sessions.length===0){
     body.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:20px">No hay sesiones. Añade la primera.</div>';
+    updateToggleAllBtn();
     return;
   }
   sessions.forEach((sess,idx)=>{ body.appendChild(buildSessionCard(sess,idx)); });
+  updateToggleAllBtn();
 }
 
 function buildSessionCard(sess,idx) {
   const card=document.createElement('div');
   card.className='session-card'; card.dataset.idx=idx;
+  if(!Array.isArray(sess.participantes)) sess.participantes = [];
   const ri=getRatingInfo(sess.rating);
   const modBadge = sess.modalidad ? `<span style="background:#e8f5ed;color:var(--primary);padding:1px 6px;border-radius:4px;font-size:.7rem;margin-left:5px">${sess.modalidad}</span>` : '';
   card.innerHTML=`
     <div class="session-card-header" onclick="toggleSession(${idx})">
       <div class="session-num">${idx+1}</div>
       <div class="session-card-title" id="scTitle_${idx}">${sess.tarea||'Sesión '+(idx+1)} ${modBadge} ${ri.label?`<span style="color:${ri.color};margin-left:5px;font-size:.72rem">● ${ri.label}</span>`:''}</div>
+      <button class="session-expand-btn" id="expandBtn_${idx}" onclick="event.stopPropagation();toggleSessionFullHeight(${idx})" title="Alternar entre ver con barra o desplegado completo">↕ Barra</button>
       <div class="session-toggle" id="toggle-${idx}">▼</div>
       <button class="session-del-btn" onclick="event.stopPropagation();deleteSession(${idx})" title="Eliminar sesión">🗑️</button>
     </div>
     <div class="session-fields" id="fields-${idx}">
       <div class="field-row"><div class="field-label">Tarea</div>${buildSelectHTML('tarea',sess.tarea,idx)}</div>
       <div class="field-row"><div class="field-label">Modalidad</div>${buildSelectHTML('modalidad',sess.modalidad,idx)}</div>
+      <div class="field-row"><div class="field-label">Participantes</div>${buildParticipantsHTML(sess.participantes,idx)}</div>
       <div class="field-row"><div class="field-label">Duración</div>${buildSelectHTML('duracion',sess.duracion,idx)}</div>
       <div class="field-row"><div class="field-label">Lugar</div>${buildSelectHTML('lugar',sess.lugar,idx)}</div>
       <div class="field-row"><div class="field-label">Tiempo</div>${buildSelectHTML('tiempo',sess.tiempo,idx)}</div>
+      <div class="field-row"><div class="field-label">Viento</div>${buildSelectHTML('viento',sess.viento,idx)}</div>
       <div class="field-row">
         <div class="field-label">Valoración</div>
         <div class="rating-row">
@@ -1615,14 +2188,54 @@ function buildSessionCard(sess,idx) {
         </div>
       </div>
     </div>`;
-  setTimeout(()=>renderFileGrid(idx),0);
+  setTimeout(()=>{
+    renderFileGrid(idx);
+    const ta=card.querySelector('.field-textarea');
+    if(ta) autoResize(ta);
+  },0);
   return card;
 }
 
 function toggleSession(idx){
   const f=document.getElementById(`fields-${idx}`), t=document.getElementById(`toggle-${idx}`);
+  if(!f || !t) return;
   if(f.classList.contains('collapsed')){f.classList.remove('collapsed');t.textContent='▼';}
   else{f.classList.add('collapsed');t.textContent='▶';}
+  updateToggleAllBtn();
+}
+
+function toggleSessionFullHeight(idx){
+  const f=document.getElementById(`fields-${idx}`);
+  const btn=document.getElementById(`expandBtn_${idx}`);
+  if(!f) return;
+  const isFull=f.classList.toggle('full-height');
+  if(btn) btn.textContent=isFull?'↕ Completo':'↕ Barra';
+}
+
+function toggleAllSessions(){
+  const sessions=getSessions();
+  const someCollapsed=sessions.some((_,i)=>document.getElementById(`fields-${i}`)?.classList.contains('collapsed'));
+  sessions.forEach((_,i)=>{
+    const f=document.getElementById(`fields-${i}`), t=document.getElementById(`toggle-${i}`);
+    if(f && t){
+      if(someCollapsed){ f.classList.remove('collapsed'); t.textContent='▼'; }
+      else { f.classList.add('collapsed'); t.textContent='▶'; }
+    }
+  });
+  updateToggleAllBtn();
+}
+
+function updateToggleAllBtn(){
+  const btn=document.getElementById('toggleAllSessionsBtn');
+  if(!btn) return;
+  const sessions=getSessions();
+  if(sessions.length <= 1){
+    btn.style.display='none';
+    return;
+  }
+  btn.style.display='inline-block';
+  const someCollapsed=sessions.some((_,i)=>document.getElementById(`fields-${i}`)?.classList.contains('collapsed'));
+  btn.textContent=someCollapsed ? '⇕ Desplegar todas' : '⇕ Plegar todas';
 }
 function updateSessionCardTitle(idx){
   const sess=getSessions()[idx];
@@ -1637,12 +2250,35 @@ function setRating(idx,val){
   updateSessionCardTitle(idx);
   saveAll();
 }
-function autoResize(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+function autoResize(el){
+  if(!el) return;
+  el.style.height='auto';
+  const newH = Math.min(Math.max(el.scrollHeight, 75), 240);
+  el.style.height=newH+'px';
+}
 function addSession(){
-  getSessions().push({tarea:'',modalidad:'',duracion:'',lugar:'',tiempo:'',rating:'',notas:'',files:[]});
+  const s=getSessions();
+  s.push({tarea:'',modalidad:'',duracion:'',lugar:'',tiempo:'',viento:'',rating:'',notas:'',files:[],participantes:[]});
   renderDaySessions();
   saveAll();
-  setTimeout(()=>{const b=document.getElementById('dayModalBody');b.scrollTop=b.scrollHeight;},60);
+  setTimeout(()=>{
+    const b=document.getElementById('dayModalBody');
+    if(b){
+      b.scrollTo({top:b.scrollHeight,behavior:'smooth'});
+      const cards=b.querySelectorAll('.session-card');
+      const newCard=cards[cards.length-1];
+      if(newCard){
+        newCard.scrollIntoView({behavior:'smooth',block:'end'});
+        newCard.style.transition='box-shadow 0.35s ease, border-color 0.35s ease';
+        newCard.style.borderColor='var(--primary)';
+        newCard.style.boxShadow='0 0 0 3px rgba(26, 92, 56, 0.35)';
+        setTimeout(()=>{
+          newCard.style.borderColor='';
+          newCard.style.boxShadow='';
+        },1600);
+      }
+    }
+  },100);
 }
 function deleteSession(idx){
   if(!confirm('¿Eliminar esta sesión?'))return;
@@ -1882,8 +2518,10 @@ function applyImport(data,mode){
     if(!confirm('¿Reemplazar TODOS los datos actuales?'))return;
     state.dogs=data.dogs; state.sessions=data.sessions;
     state.monthColors=data.monthColors||{};
-    state.customOptions=data.customOptions||{tarea:[],modalidad:[],duracion:[],lugar:[],tiempo:[]};
+    state.customOptions=data.customOptions||{tarea:[],modalidad:[],duracion:[],lugar:[],tiempo:[],viento:[],participantes:[]};
     if(!state.customOptions.modalidad) state.customOptions.modalidad=[];
+    if(!state.customOptions.viento) state.customOptions.viento=[];
+    if(!state.customOptions.participantes) state.customOptions.participantes=[];
     state.monthlyImprovements=data.monthlyImprovements||{};
   }else{
     data.dogs.forEach(dog=>{if(!state.dogs.find(d=>d.id===dog.id))state.dogs.push(dog);});
@@ -1968,8 +2606,10 @@ function printDetailView(){
         <div class="pd-session-num" style="background:${monthColor}">Sesión ${i+1}</div>
         <table class="pd-table">
           <tr><td class="pd-label">Tarea</td><td>${s.tarea||'—'}</td><td class="pd-label">Modalidad</td><td>${s.modalidad||'—'}</td></tr>
+          ${(s.participantes && s.participantes.length)?`<tr><td class="pd-label">Participantes</td><td colspan="3">${escapeHtml(s.participantes.join(', '))}</td></tr>`:''}
           <tr><td class="pd-label">Duración</td><td>${s.duracion||'—'}</td><td class="pd-label">Lugar</td><td>${s.lugar||'—'}</td></tr>
-          <tr><td class="pd-label">Tiempo</td><td>${s.tiempo||'—'}</td><td class="pd-label">Valoración</td><td><span style="background:${ri.color};color:${ri.textColor};padding:2px 10px;border-radius:4px;font-weight:700;font-size:.82rem">${ri.label||'—'}</span></td></tr>
+          <tr><td class="pd-label">Tiempo</td><td>${s.tiempo||'—'}</td><td class="pd-label">Viento</td><td>${s.viento||'—'}</td></tr>
+          <tr><td class="pd-label">Valoración</td><td colspan="3"><span style="background:${ri.color};color:${ri.textColor};padding:2px 10px;border-radius:4px;font-weight:700;font-size:.82rem">${ri.label||'—'}</span></td></tr>
           ${s.notas?`<tr><td class="pd-label">Notas</td><td colspan="3" style="white-space:pre-wrap">${s.notas}</td></tr>`:''}
           ${imgFiles.length?`<tr><td class="pd-label">Fotos</td><td colspan="3"><div style="display:flex;gap:6px;flex-wrap:wrap">${imgFiles.map(f=>`<img src="${f.data}" style="width:80px;height:80px;object-fit:cover;border-radius:5px">`).join('')}</div></td></tr>`:''}
         </table>

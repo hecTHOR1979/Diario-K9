@@ -1,37 +1,27 @@
 {
-  "id": "gasnow-europa",
-  "name": "GasNow Europa - Precios de Carburantes",
-  "short_name": "GasNow Europa",
-  "description": "Precios de combustibles en tiempo real en España, Francia, Portugal y los 27 países de la Unión Europea con datos oficiales.",
-  "start_url": "./index.html",
+  "id": "./",
+  "name": "Diario K9 - Búsqueda y Rescate",
+  "short_name": "Diario K9",
+  "description": "Planificador y diario de entrenamiento para perros de rescate K9 adaptado a Redmi Pad 2 Pro, Redmi Note 13 Pro y PC.",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#070a12",
-  "theme_color": "#10b981",
+  "orientation": "any",
+  "background_color": "#1a5c38",
+  "theme_color": "#1a5c38",
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "./huella-k9-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "./huella-k9-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "logo.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg"
     }
   ]
 }

@@ -1,280 +1,2694 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GasNow Europa — Precios de Combustibles en Tiempo Real (España, Francia, Portugal y UE)</title>
-  <meta name="description" content="Consulta los precios actualizados de gasolina 95, 98, diésel y GLP en tiempo real en España, Francia, Portugal y los 27 países de la Unión Europea con datos oficiales.">
-  
-  <!-- Favicon y PWA -->
-  <link rel="icon" type="image/jpeg" href="logo.jpg">
-  <link rel="apple-touch-icon" href="logo.jpg">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#070a12">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a5c38" id="metaThemeColor">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Diario K9">
+<link rel="manifest" href="./manifest.json">
+<link rel="shortcut icon" type="image/x-icon" href="./favicon.ico?v=9">
+<link rel="icon" type="image/png" sizes="192x192" href="./huella-k9-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./huella-k9-512.png">
+<link rel="apple-touch-icon" href="./huella-k9-192.png">
+<title>🐕 Diario K9 - Búsqueda y Rescate</title>
+<script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js" defer></script>
+<style>
+:root {
+  --primary:#1a5c38; --primary-light:#2d7a50; --primary-dark:#0f3d26;
+  --secondary:#d97706; --bg:#f0f4f1; --surface:#ffffff; --surface2:#f8faf9;
+  --border:#d1d5db; --text:#1f2937; --text-muted:#6b7280;
+  --shadow:0 2px 8px rgba(0,0,0,.10); --shadow-lg:0 8px 32px rgba(0,0,0,.18);
+  --radius:12px; --radius-sm:8px; --month-color:#1a5c38;
+  --r1:#22c55e; --r2:#16a34a; --r3:#f59e0b; --r4:#ea580c; --r5:#dc2626;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:var(--safe-bottom)}
 
-  <!-- Google Fonts: Outfit (Titulares) e Inter (Datos) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+/* ── HEADER ─────────────────────────────────── */
+.app-header{background:var(--month-color);color:#fff;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-lg);transition:background .4s;padding-top:var(--safe-top)}
+.header-top{display:flex;align-items:center;gap:6px;padding:8px 14px;flex-wrap:wrap}
+.app-logo{font-size:1.6rem;display:flex;align-items:center;flex-shrink:0}
+.app-title{font-size:1rem;font-weight:700;flex:1;min-width:80px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.sync-pill{font-size:.7rem;font-weight:600;padding:3px 7px;border-radius:12px;background:rgba(0,0,0,.25);display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#9ca3af;display:inline-block;flex-shrink:0}
+.sync-dot.online{background:#4ade80;box-shadow:0 0 6px #4ade80}
+.sync-dot.syncing{background:#fbbf24;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+.hbtn{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;font-size:.82rem;font-weight:600;display:inline-flex;align-items:center;gap:4px;transition:background .2s;white-space:nowrap;min-height:34px}
+.hbtn:hover{background:rgba(255,255,255,.3)}
+.hbtn.install-btn{background:#fbbf24;color:#1f2937;border-color:#f59e0b;font-weight:700}
+.header-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0 14px 8px}
+.hsel{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:var(--radius-sm);padding:5px 8px;font-size:.85rem;cursor:pointer;outline:none;min-height:34px}
+.hsel option{color:var(--text);background:#fff}
+.nav-btn{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:var(--radius-sm);padding:5px 10px;cursor:pointer;font-size:.9rem;transition:background .2s;min-height:34px}
+.nav-btn:hover{background:rgba(255,255,255,.3)}
+.month-title{color:rgba(255,255,255,.95);font-size:1rem;font-weight:700;white-space:nowrap}
+.color-lbl{color:rgba(255,255,255,.85);font-size:.78rem;white-space:nowrap}
+.color-inp{width:34px;height:34px;border:2px solid rgba(255,255,255,.45);border-radius:var(--radius-sm);cursor:pointer;background:none;padding:0;flex-shrink:0}
+.mobile-view-toggle{display:inline-flex}
+.only-mobile-icon{display:none!important}
 
-  <!-- Estilos de la aplicación -->
-  <link rel="stylesheet" href="css/styles.css">
+/* Ocultar cualquier publicidad o badge inyectado por el servidor (Powered by Netlify) */
+body > *:not(#appHeader):not(#mobileDogBar):not(.app-layout):not(.modal-overlay):not(#lightbox):not(#toast):not(script):not(style):not(link),
+iframe[src*="netlify"],
+a[href*="netlify"],
+div[id*="netlify"],
+div[class*="netlify"],
+[data-netlify-deploy-drawer] {
+  display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;height:0!important;width:0!important;position:fixed!important;top:-9999px!important;left:-9999px!important;z-index:-9999!important;
+}
+
+/* ── LAYOUT ─────────────────────────────────── */
+.app-layout{display:flex;min-height:calc(100vh - 115px)}
+.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);padding:14px;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.sidebar-title{font-size:.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.dog-card{display:flex;align-items:center;gap:9px;padding:10px;border-radius:var(--radius-sm);cursor:pointer;border:2px solid transparent;transition:all .2s;background:var(--surface2)}
+.dog-card:hover{border-color:var(--primary-light)}
+.dog-card.active{border-color:var(--primary);background:#e8f5ed}
+.dog-avatar-wrap{width:42px;height:42px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#e8f5ed;font-size:1.5rem}
+.dog-avatar-wrap img{width:100%;height:100%;object-fit:cover}
+.dog-name{font-size:.88rem;font-weight:600}
+.dog-breed{font-size:.72rem;color:var(--text-muted)}
+.dog-actions{margin-left:auto;display:flex;gap:3px}
+.icon-btn{background:none;border:none;cursor:pointer;font-size:.88rem;padding:4px 6px;border-radius:4px;opacity:.6;transition:opacity .2s}
+.icon-btn:hover{opacity:1}
+.add-dog-btn{display:flex;align-items:center;justify-content:center;gap:5px;padding:10px;border:2px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer;color:var(--text-muted);font-size:.84rem;background:none;width:100%;transition:all .2s}
+.add-dog-btn:hover{border-color:var(--primary);color:var(--primary)}
+.main-content{flex:1;min-width:0;padding:14px;overflow-x:auto}
+
+/* ── MOBILE / TABLET DOG BAR ─────────────────── */
+.mobile-dog-bar{display:none;overflow-x:auto;gap:8px;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);align-items:center}
+.mobile-dog-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:22px;border:1.5px solid var(--border);cursor:pointer;white-space:nowrap;font-size:.82rem;background:var(--surface);transition:all .2s;min-height:38px}
+.mobile-dog-chip.active{background:#e8f5ed;border-color:var(--primary);color:var(--primary);font-weight:700}
+.chip-avatar{width:24px;height:24px;border-radius:50%;object-fit:cover;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+.chip-edit{background:none;border:none;font-size:.75rem;margin-left:2px;cursor:pointer;opacity:.7}
+
+/* ── ONBOARDING ──────────────────────────────── */
+.onboarding{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;gap:14px;text-align:center}
+.onboarding-emoji{font-size:4rem}
+.onboarding h2{font-size:1.4rem;color:var(--primary)}
+.onboarding p{color:var(--text-muted);max-width:300px}
+
+/* ── BUTTONS ─────────────────────────────────── */
+.btn-primary{background:var(--primary);color:#fff;border:none;border-radius:var(--radius);padding:10px 20px;font-size:.9rem;font-weight:600;cursor:pointer;transition:background .2s;display:flex;align-items:center;gap:7px}
+.btn-primary:hover{background:var(--primary-light)}
+.btn-secondary{background:var(--surface);color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius);padding:9px 18px;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
+.btn-danger{background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;border-radius:var(--radius);padding:9px 18px;font-size:.88rem;font-weight:600;cursor:pointer}
+
+/* ── CALENDAR ────────────────────────────────── */
+.calendar-container{max-width:1360px;margin:0 auto;width:100%}
+.calendar-scroll-wrap{width:100%;overflow-x:auto;padding-bottom:10px;-webkit-overflow-scrolling:touch}
+.calendar-scroll-wrap::-webkit-scrollbar,.main-content::-webkit-scrollbar{height:12px;width:12px}
+.calendar-scroll-wrap::-webkit-scrollbar-track,.main-content::-webkit-scrollbar-track{background:#e2e8f0;border-radius:6px}
+.calendar-scroll-wrap::-webkit-scrollbar-thumb,.main-content::-webkit-scrollbar-thumb{background:var(--month-color);border-radius:6px;border:2px solid #e2e8f0;cursor:grab}
+.calendar-scroll-wrap::-webkit-scrollbar-thumb:active{cursor:grabbing}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(128px,1fr));gap:5px;min-width:920px}
+.cal-header-cell{background:var(--month-color);color:#fff;text-align:center;padding:9px 3px;font-size:.78rem;font-weight:700;border-radius:var(--radius-sm);text-transform:uppercase;letter-spacing:.05em;transition:background .4s}
+.day-cell{background:var(--surface);border-radius:var(--radius-sm);padding:6px;min-height:108px;max-height:175px;overflow-y:auto;min-width:0;border:1.5px solid transparent;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:4px;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent}
+.day-cell::-webkit-scrollbar{width:4px}
+.day-cell::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px}
+.day-cell::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+.day-cell:hover{border-color:var(--primary-light);box-shadow:var(--shadow)}
+.day-cell.other-month{background:#f1f5f2;opacity:.45;cursor:default}
+.day-cell.other-month:hover{border-color:transparent;box-shadow:none}
+.day-cell.today{border-color:var(--secondary);background:#fffbeb}
+.day-cell.has-data{border-color:var(--primary-light)}
+.day-number{font-size:.84rem;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.day-cell.today .day-number{color:var(--secondary)}
+.day-add-btn{font-size:.65rem;background:var(--primary);color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;flex-shrink:0}
+.day-cell:hover .day-add-btn{opacity:1}
+
+/* ── AGENDA VIEW (Lista / Cuadrícula en móvil, tablet y PC) ───── */
+.calendar-grid.agenda-mode{display:flex;flex-direction:column;gap:8px;min-width:0!important}
+.calendar-grid.agenda-mode .cal-header-cell{display:none}
+.calendar-grid.agenda-mode .day-cell.other-month{display:none}
+.calendar-grid.agenda-mode .day-cell{min-height:auto;max-height:none;padding:10px 14px;overflow-y:visible}
+.calendar-grid.agenda-mode .day-cell:not(.has-data):not(.today){min-height:auto;padding:7px 14px;opacity:.75}
+.calendar-grid.agenda-mode .day-add-btn{opacity:1;width:24px;height:24px;font-size:.8rem}
+.calendar-grid.agenda-mode .sess-mini{font-size:.8rem;padding:0}
+.calendar-grid.agenda-mode .sess-mini-row.extra-detail{display:flex}
+
+/* ── SESSION PREVIEW in Calendar ─────────────── */
+.sess-mini{font-size:.69rem;border-radius:6px;padding:0;border:1px solid rgba(0,0,0,.08);background:#fff;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:all .15s}
+.sess-mini:hover{box-shadow:0 2px 6px rgba(0,0,0,.12);transform:translateY(-1px)}
+.sess-tarea-badge{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:3px 6px;font-weight:700;font-size:.72rem;line-height:1.2}
+.sess-tarea-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess-has-file{font-size:.62rem;background:rgba(255,255,255,.3);padding:0 4px;border-radius:3px;flex-shrink:0}
+.sess-mini-body{padding:3px 6px;display:flex;flex-direction:column;gap:2px;background:#f8faf9}
+.sess-modalidad{font-size:.62rem;font-weight:600;color:var(--primary);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess-meta-row{display:flex;align-items:center;gap:4px;font-size:.72rem;line-height:1.2}
+.sess-weather-icons{display:inline-flex;align-items:center;gap:2px;flex-shrink:0}
+.sess-lugar-mini{font-size:.6rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.sess-notas-mini{font-size:.6rem;color:var(--text-muted);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess-more{font-size:.62rem;color:var(--text-muted);text-align:right;margin-top:2px}
+
+/* ── MODALS ──────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:1000;display:flex;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(2px)}
+.modal-overlay.hidden{display:none}
+.modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:100%;max-width:660px;height:min(88vh,720px);max-height:88vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--month-color);color:#fff;transition:background .4s;flex-shrink:0}
+.modal-title{font-size:1.05rem;font-weight:700}
+.btn-toggle-all{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:var(--radius-sm);padding:5px 10px;font-size:.75rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-toggle-all:hover{background:rgba(255,255,255,.35)}
+.modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;cursor:pointer;font-size:1.1rem;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.modal-close:hover{background:rgba(255,255,255,.4)}
+.modal-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 26px;display:flex;flex-direction:column;gap:14px;flex:1 1 auto;min-height:0;scrollbar-width:thin;scrollbar-color:var(--month-color,#1a5c38) #e2e8f0}
+.modal-body::-webkit-scrollbar{width:10px}
+.modal-body::-webkit-scrollbar-track{background:#f1f5f9;border-radius:6px}
+.modal-body::-webkit-scrollbar-thumb{background:var(--month-color,#1a5c38);border-radius:6px;border:2px solid #f1f5f9}
+.modal-body::-webkit-scrollbar-thumb:hover{background:#14462b}
+.modal-footer{padding:12px 18px calc(12px + var(--safe-bottom));border-top:1px solid var(--border);display:flex;gap:9px;justify-content:flex-end;background:var(--surface2);flex-shrink:0}
+
+/* ── SESSION CARD ────────────────────────────── */
+.session-card{border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface2);display:flex;flex-direction:column}
+.session-card-header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface);border-bottom:1.5px solid var(--border);cursor:pointer;flex-shrink:0}
+.session-num{background:var(--month-color);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:700;flex-shrink:0;transition:background .4s}
+.session-card-title{flex:1;font-size:.88rem;font-weight:600}
+.session-expand-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:.72rem;font-weight:600;color:var(--text-muted);padding:3px 7px;transition:all .2s;white-space:nowrap}
+.session-expand-btn:hover{border-color:var(--primary);color:var(--primary);background:rgba(0,0,0,.04)}
+.session-toggle{font-size:.78rem;color:var(--text-muted)}
+.session-del-btn{background:none;border:none;cursor:pointer;font-size:1rem;color:#ef4444;padding:4px;opacity:.7;transition:opacity .2s}
+.session-del-btn:hover{opacity:1}
+
+/* BARRA DE DESPLAZAMIENTO DENTRO DE LA SESIÓN */
+.session-fields{padding:14px 16px;display:flex;flex-direction:column;gap:11px;max-height:50vh;overflow-y:scroll!important;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--month-color,#1a5c38) #e2e8f0;border-top:1px solid var(--border)}
+.session-fields::-webkit-scrollbar{width:8px}
+.session-fields::-webkit-scrollbar-track{background:#f1f5f9;border-radius:4px}
+.session-fields::-webkit-scrollbar-thumb{background:var(--month-color,#1a5c38);border-radius:4px}
+.session-fields::-webkit-scrollbar-thumb:hover{background:#14462b}
+.session-fields.collapsed{display:none}
+.session-fields.full-height{max-height:none!important;overflow-y:visible!important}
+
+.field-row{display:grid;grid-template-columns:95px 1fr;gap:8px;align-items:start}
+.field-label{font-size:.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;padding-top:9px}
+.field-select,.field-textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;font-size:.86rem;color:var(--text);background:var(--surface);outline:none;transition:border-color .2s;font-family:inherit;min-height:40px}
+.field-select:focus,.field-textarea:focus{border-color:var(--primary)}
+.field-textarea{resize:vertical;overflow-y:auto;min-height:75px;max-height:220px;line-height:1.5;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#64748b #f1f5f9}
+.field-textarea::-webkit-scrollbar{width:8px}
+.field-textarea::-webkit-scrollbar-track{background:#f1f5f9;border-radius:4px}
+.field-textarea::-webkit-scrollbar-thumb{background:#64748b;border-radius:4px}
+.field-textarea::-webkit-scrollbar-thumb:hover{background:#475569}
+
+/* ── CUSTOM SELECT WITH EMOJI PICKER ────────── */
+.custom-sel-wrap{position:relative;width:100%}
+.custom-sel-wrap select{width:100%;appearance:auto}
+.add-opt-box{display:flex;flex-direction:column;gap:6px;margin-top:6px;padding:8px;background:var(--surface);border:1.5px solid var(--primary);border-radius:var(--radius-sm);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.add-opt-row{display:flex;gap:6px;align-items:center}
+.add-opt-icon-btn{background:#f1f5f9;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:4px 8px;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;gap:3px;flex-shrink:0;transition:all .2s;min-height:36px}
+.add-opt-icon-btn:hover{border-color:var(--primary);background:#e2e8f0}
+.add-opt-input{flex:1;min-width:0;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:.85rem;outline:none;font-family:inherit}
+.add-opt-input:focus{border-color:var(--primary)}
+.add-opt-confirm{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:7px 12px;cursor:pointer;font-size:.85rem;font-weight:700}
+.add-opt-confirm:hover{background:var(--primary-light)}
+.add-opt-cancel{background:#f1f5f9;color:var(--text-muted);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;cursor:pointer;font-size:.85rem}
+.add-opt-palette{display:flex;flex-direction:column;gap:4px;padding-top:4px;border-top:1px dashed var(--border)}
+.palette-title{font-size:.68rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.palette-emojis{display:flex;gap:4px;flex-wrap:wrap}
+.emoji-chip{font-size:1.15rem;padding:3px 6px;border-radius:6px;cursor:pointer;background:#f8faf9;border:1px solid var(--border);transition:all .15s;user-select:none}
+.emoji-chip:hover,.emoji-chip.selected{background:#e8f5ed;border-color:var(--primary);transform:scale(1.15)}
+
+/* ── PARTICIPANTES ─────────────────────────── */
+.participants-field-wrap{display:flex;flex-direction:column;gap:6px;width:100%}
+.participant-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:28px;align-items:center}
+.participant-chip{display:inline-flex;align-items:center;gap:5px;background:#e8f5ed;color:var(--primary);border:1px solid #c2e2cf;border-radius:14px;padding:3px 9px;font-size:.78rem;font-weight:600}
+.participant-chip-name{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.participant-chip-del{background:none;border:none;color:var(--primary);cursor:pointer;font-size:.85rem;line-height:1;padding:0 2px;opacity:.7;transition:all .15s}
+.participant-chip-del:hover{opacity:1;color:#dc2626;transform:scale(1.2)}
+.no-participants-hint{font-size:.75rem;color:var(--text-muted);font-style:italic}
+.participant-select{cursor:pointer}
+.sess-participantes-mini{color:var(--text-muted);font-size:.66rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── RATING ──────────────────────────────────── */
+.rating-row{display:flex;gap:5px;flex-wrap:wrap}
+.rating-opt{flex:1;min-width:62px;padding:7px 4px;border:2px solid transparent;border-radius:var(--radius-sm);cursor:pointer;font-size:.72rem;font-weight:700;text-align:center;transition:all .2s;opacity:.45;background:#f1f5f1}
+.rating-opt.selected{opacity:1;border-color:rgba(0,0,0,.3)}
+.rating-opt[data-val="muy-bien"]{color:#15803d}.rating-opt[data-val="muy-bien"].selected{background:var(--r1);color:#fff}
+.rating-opt[data-val="bien"]{color:#166534}.rating-opt[data-val="bien"].selected{background:var(--r2);color:#fff}
+.rating-opt[data-val="regular"]{color:#b45309}.rating-opt[data-val="regular"].selected{background:var(--r3);color:#fff}
+.rating-opt[data-val="mal"]{color:#c2410c}.rating-opt[data-val="mal"].selected{background:var(--r4);color:#fff}
+.rating-opt[data-val="muy-mal"]{color:#b91c1c}.rating-opt[data-val="muy-mal"].selected{background:var(--r5);color:#fff}
+
+/* ── FILE UPLOAD ─────────────────────────────── */
+.file-section{display:flex;flex-direction:column;gap:7px}
+.file-drop-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center;cursor:pointer;transition:all .2s;font-size:.82rem;color:var(--text-muted)}
+.file-drop-area:hover{border-color:var(--primary);color:var(--primary)}
+.file-grid{display:flex;flex-wrap:wrap;gap:7px}
+.file-thumb{position:relative;width:72px;height:72px;border-radius:var(--radius-sm);overflow:hidden;border:1.5px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer}
+.file-thumb img{width:100%;height:100%;object-fit:cover}
+.file-thumb-icon{font-size:1.6rem}
+.file-thumb-name{font-size:.6rem;color:var(--text-muted);text-align:center;padding:0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
+.file-del-btn{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:19px;height:19px;cursor:pointer;font-size:.65rem;display:flex;align-items:center;justify-content:center}
+
+/* ── DOG MODAL / PHOTO ───────────────────────── */
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+.form-input{border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;font-size:.9rem;color:var(--text);background:var(--surface);outline:none;font-family:inherit;transition:border-color .2s}
+.form-input:focus{border-color:var(--primary)}
+.avatar-selector{display:flex;gap:9px;flex-wrap:wrap}
+.avatar-opt{font-size:1.7rem;cursor:pointer;padding:5px;border-radius:var(--radius-sm);border:2px solid transparent;transition:all .2s}
+.avatar-opt.selected{border-color:var(--primary);background:#e8f5ed}
+.dog-photo-wrap{display:flex;align-items:center;gap:14px}
+.dog-photo-preview{width:80px;height:80px;border-radius:50%;overflow:hidden;border:3px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:2rem;background:#e8f5ed;flex-shrink:0}
+.dog-photo-preview img{width:100%;height:100%;object-fit:cover}
+.dog-photo-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 13px;font-size:.82rem;cursor:pointer;transition:all .2s}
+.dog-photo-btn:hover{border-color:var(--primary);color:var(--primary)}
+
+/* ── SYNC / PDF modals ───────────────────────── */
+.sync-section{border:1.5px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:9px;background:var(--surface2)}
+.sync-section.highlight{border-color:#22c55e;background:#f0fdf4}
+.sync-section-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--primary);display:flex;align-items:center;gap:6px}
+.sync-section p{font-size:.82rem;color:var(--text-muted);line-height:1.4}
+.sync-code-box{background:#1e293b;color:#86efac;border-radius:var(--radius-sm);padding:9px;font-family:monospace;font-size:.72rem;word-break:break-all;max-height:90px;overflow-y:auto;user-select:all}
+.sync-btn-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.btn-sync{display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:var(--radius-sm);border:none;font-size:.82rem;font-weight:600;cursor:pointer;transition:opacity .2s;min-height:38px}
+.btn-sync:hover{opacity:.85}
+.btn-sync.green{background:#22c55e;color:#fff}.btn-sync.blue{background:#3b82f6;color:#fff}
+.btn-sync.amber{background:#f59e0b;color:#fff}.btn-sync.red{background:#ef4444;color:#fff}
+.sync-import-area{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:7px;font-family:monospace;font-size:.72rem;min-height:70px;resize:vertical;color:var(--text);background:var(--surface);outline:none}
+.sync-room-input{flex:1;min-width:160px;border:1.5px solid var(--primary);border-radius:var(--radius-sm);padding:8px 11px;font-size:.9rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;outline:none}
+.pdf-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.pdf-opt-card{border:2px solid var(--border);border-radius:var(--radius);padding:13px;cursor:pointer;text-align:center;transition:all .2s;background:var(--surface2);display:flex;flex-direction:column;align-items:center;gap:5px}
+.pdf-opt-card:hover{border-color:var(--primary)}
+.pdf-opt-card.selected{border-color:var(--primary);background:#e8f5ed}
+.pdf-opt-icon{font-size:1.8rem}.pdf-opt-label{font-size:.82rem;font-weight:700}.pdf-opt-desc{font-size:.7rem;color:var(--text-muted)}
+.pdf-preview-info{background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius-sm);padding:11px;font-size:.8rem;color:#1e40af}
+
+/* ── PHOTO LIGHTBOX ──────────────────────────── */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9000;display:flex;align-items:center;justify-content:center}
+.lightbox.hidden{display:none}
+.lightbox img{max-width:94vw;max-height:92vh;border-radius:var(--radius);box-shadow:var(--shadow-lg)}
+.lightbox-close{position:fixed;top:14px;right:18px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:1.4rem;cursor:pointer;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center}
+
+/* ── PRINT HEADER & MONTHLY SUMMARY ─────────── */
+.print-only-header{display:none;align-items:center;justify-content:space-between;padding:12px 16px;margin-bottom:12px;border-bottom:3px solid var(--month-color);background:#f8faf9;border-radius:var(--radius-sm)}
+.print-dog-info{display:flex;align-items:center;gap:12px}
+.print-dog-avatar{width:52px;height:52px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:2rem;background:#e8f5ed;border:2px solid var(--month-color);overflow:hidden}
+.print-dog-avatar img{width:100%;height:100%;object-fit:cover}
+.print-dog-title{font-size:1.35rem;font-weight:800;color:var(--text)}
+.print-dog-sub{font-size:.85rem;color:var(--text-muted)}
+.print-month-badge{font-size:1.15rem;font-weight:800;color:var(--month-color);text-align:right}
+
+.monthly-summary{margin-top:20px;display:flex;flex-direction:column;gap:16px}
+.summary-header-bar{background:var(--month-color);color:#fff;padding:10px 16px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;transition:background .4s}
+.summary-header-bar h3{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:7px}
+.summary-kpi-row{display:flex;gap:14px;font-size:.85rem;font-weight:600}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.summary-card{background:var(--surface);border-radius:var(--radius-sm);padding:14px;border:1.5px solid var(--border);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.summary-card.full-width{grid-column:1 / -1}
+.summary-card-title{font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--primary);border-bottom:1.5px solid var(--border);padding-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.summary-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.summary-table th{text-align:left;padding:6px 8px;background:var(--surface2);color:var(--text-muted);font-size:.73rem;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.summary-table td{padding:6px 8px;border-bottom:1px solid #f1f5f2;vertical-align:middle}
+.summary-table tr:last-child td{border-bottom:none}
+.summary-table tr.total-row td{font-weight:700;border-top:2px solid var(--border);background:var(--surface2)}
+.summary-bar-wrap{width:100%;background:#e5e7eb;height:7px;border-radius:4px;overflow:hidden;margin-top:3px}
+.summary-bar-fill{height:100%;background:var(--month-color);border-radius:4px}
+.improve-list{display:flex;flex-direction:column;gap:7px;font-size:.83rem}
+.improve-item{padding:8px 10px;border-radius:var(--radius-sm);background:#fffbeb;border-left:4px solid #f59e0b;display:flex;flex-direction:column;gap:3px}
+.improve-item.bad{background:#fef2f2;border-left-color:#ef4444}
+.improve-item.note{background:#f0fdf4;border-left-color:#22c55e}
+.improve-item-meta{font-size:.72rem;font-weight:700;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.improve-item-text{color:var(--text);line-height:1.4;white-space:pre-wrap}
+.improve-manual-box{margin-top:6px;display:flex;flex-direction:column;gap:5px}
+.improve-manual-box label{font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase}
+.improve-manual-textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;font-size:.83rem;font-family:inherit;min-height:60px;resize:vertical;outline:none;background:var(--surface2)}
+.improve-manual-textarea:focus{border-color:var(--primary);background:var(--surface)}
+
+/* ── ADAPTACIÓN ESPECÍFICA DISPOSITIVOS ─────── */
+/* 1) REDMI PAD 2 PRO (12.1", 16:10 -> ~800px a 1360px) */
+@media (min-width: 720px) and (max-width: 1366px) {
+  .sidebar{width:200px;padding:12px}
+  .main-content{padding:12px;overflow-x:auto}
+  .calendar-scroll-wrap{overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+  .calendar-grid:not(.agenda-mode){gap:5px;grid-template-columns:repeat(7,minmax(115px,1fr))!important;min-width:820px!important}
+  .day-cell{min-height:112px;padding:7px}
+  .day-add-btn{opacity:.85;width:22px;height:22px}
+  .sess-mini{font-size:.71rem;padding:4px 6px}
+  .hbtn,.hsel,.nav-btn{min-height:40px;font-size:.86rem}
+}
+/* Redmi Pad 2 Pro en vertical (720px - 920px): pasar perros arriba para dar 100% ancho al calendario */
+@media (min-width: 720px) and (max-width: 920px) {
+  .sidebar{display:none}
+  .mobile-dog-bar{display:flex}
+}
+
+/* 2) REDMI NOTE 13 PRO Y MÓVILES (<= 719px, pantalla 20:9 ~393x873px) */
+@media (max-width: 719px) {
+  .sidebar{display:none}
+  .mobile-dog-bar{display:flex;padding:5px 8px;gap:6px}
+  .mobile-dog-chip{padding:4px 10px;min-height:32px;font-size:.78rem}
+  .mobile-view-toggle{display:inline-flex}
+  .hide-on-mobile{display:none!important}
+  .only-mobile-icon{display:inline!important}
+  .main-content{padding:6px;overflow-x:auto}
+  .calendar-scroll-wrap{overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+  .calendar-grid:not(.agenda-mode){gap:3px;grid-template-columns:repeat(7,minmax(82px,1fr))!important;min-width:580px!important}
+  .cal-header-cell{font-size:.65rem;padding:6px 1px}
+  .day-cell{min-height:76px;max-height:140px;overflow-y:auto;padding:3px}
+  .day-number{font-size:.72rem}
+  .sess-mini{font-size:.58rem;padding:3px 3px;border-left-width:3px;gap:2px}
+  .sess-line-1{font-size:.66rem}
+  .sess-dur-badge{font-size:.56rem;padding:0 3px}
+  .sess-modalidad{font-size:.58rem}
+  .sess-line-3{font-size:.62rem}
+  .sess-weather-icons{font-size:.68rem}
+  .sess-rating-badge{font-size:.56rem;padding:1px 4px}
+  .sess-mini-row.extra-detail{display:none}
+  .calendar-grid.agenda-mode .sess-mini{font-size:.78rem;padding:6px 8px;border-left-width:4px;gap:3px}
+  .calendar-grid.agenda-mode .sess-mini-row.extra-detail{display:flex}
+  .calendar-grid.agenda-mode .sess-line-1{font-size:.85rem}
+  .calendar-grid.agenda-mode .sess-dur-badge{font-size:.68rem;padding:1px 5px}
+  .calendar-grid.agenda-mode .sess-modalidad{font-size:.74rem}
+  .calendar-grid.agenda-mode .sess-weather-icons{font-size:.82rem}
+  .calendar-grid.agenda-mode .sess-rating-badge{font-size:.7rem;padding:2px 7px}
+  .field-row{grid-template-columns:1fr;gap:3px}
+  .field-label{padding-top:2px;font-size:.7rem}
+  .modal-overlay{padding:0;align-items:flex-end}
+  .modal{height:92vh;max-height:92vh;border-radius:16px 16px 0 0}
+  .session-fields{max-height:54vh}
+  .pdf-options,.summary-grid{grid-template-columns:1fr}
+}
+
+/* En PC con ratón: scroll horizontal fluido */
+@media (hover: hover) and (pointer: fine) and (min-width: 720px) {
+  .calendar-scroll-wrap{overflow-x:auto}
+  .calendar-grid:not(.agenda-mode){grid-template-columns:repeat(7,minmax(128px,1fr))!important;min-width:920px!important;gap:5px}
+  .day-cell{min-height:105px;padding:7px}
+  .sess-mini{font-size:.69rem;padding:4px 5px}
+  .sess-mini-row.extra-detail{display:flex!important}
+}
+
+@media (min-width: 1367px) {
+  .sidebar{width:245px}
+  .day-cell{min-height:122px}
+}
+
+/* ── PRINT ───────────────────────────────────── */
+@media print{
+  .app-header,.sidebar,.modal-overlay,.mobile-dog-bar,.day-add-btn,.no-print{display:none!important}
+  .print-only-header{display:flex!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff;font-size:11px}
+  .app-layout{display:block}
+  .main-content,.calendar-scroll-wrap{padding:0;overflow:visible!important}
+  .calendar-container{max-width:100%}
+  .calendar-grid,.calendar-grid.agenda-mode{display:grid!important;grid-template-columns:repeat(7,1fr)!important;min-width:0!important}
+  .calendar-grid.agenda-mode .cal-header-cell{display:block!important}
+  .calendar-grid.agenda-mode .day-cell.other-month{display:flex!important}
+  .day-cell{break-inside:avoid;border:1px solid #cbd5e1!important;min-height:70px;padding:4px}
+  .sess-mini,.cal-header-cell,.rating-pill-mini,.summary-header-bar,.summary-bar-fill,.improve-item,.summary-table th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sess-mini-row.extra-detail{display:flex!important}
+  .monthly-summary{margin-top:14px;break-inside:avoid}
+  .summary-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .summary-card{break-inside:avoid;padding:10px;box-shadow:none;border:1px solid #cbd5e1}
+  .improve-manual-textarea{border:1px solid #cbd5e1;background:#fff}
+}
+@page{margin:1cm}
+
+/* ── UTILS ───────────────────────────────────── */
+.hidden{display:none!important}
+.toast{position:fixed;bottom:calc(18px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(100px);background:var(--primary);color:#fff;padding:9px 18px;border-radius:20px;font-size:.82rem;font-weight:600;z-index:9999;transition:transform .3s;box-shadow:var(--shadow-lg)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.btn-add-session{background:var(--primary);color:#fff;border:none;border-radius:var(--radius);padding:10px 14px;font-size:.86rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:background .2s;width:100%}
+.btn-add-session:hover{background:var(--primary-light)}
+</style>
 </head>
-<body class="view-map-active">
+<body>
 
-  <!-- Cabecera Principal (Sin logo, adaptada a pantalla Redmi Note 13 Pro) -->
-  <header class="app-header">
-    <div class="brand-section">
-      <div class="brand-text">
-        <h1 class="app-brand-title">⛽ GasNow</h1>
-      </div>
+<!-- HEADER -->
+<header class="app-header" id="appHeader">
+  <div class="header-top">
+    <div class="app-logo"><svg viewBox="0 0 512 512" width="36" height="36" style="vertical-align:middle"><g stroke="#ffffff" stroke-width="14" stroke-linejoin="round"><path d="M108 158 L95 112 L126 142 Z" fill="#111111"/><path d="M204 102 L198 52 L224 94 Z" fill="#111111"/><path d="M308 102 L314 52 L288 94 Z" fill="#111111"/><path d="M404 158 L417 112 L386 142 Z" fill="#111111"/><ellipse cx="132" cy="218" rx="38" ry="56" transform="rotate(-22 132 218)" fill="#111111"/><ellipse cx="212" cy="162" rx="40" ry="60" transform="rotate(-7 212 162)" fill="#111111"/><ellipse cx="300" cy="162" rx="40" ry="60" transform="rotate(7 300 162)" fill="#111111"/><ellipse cx="380" cy="218" rx="38" ry="56" transform="rotate(22 380 218)" fill="#111111"/><path d="M 256 238 C 305 238, 338 275, 362 320 C 385 362, 378 418, 336 436 C 304 448, 282 426, 256 426 C 230 426, 208 448, 176 436 C 134 418, 127 362, 150 320 C 174 275, 207 238, 256 238 Z" fill="#111111"/></g><text x="256" y="382" font-family="Arial Black, Impact, Arial, sans-serif" font-size="112" font-weight="900" fill="#ffffff" stroke="#fbbf24" stroke-width="4" text-anchor="middle">K9</text></svg></div>
+    <div class="app-title">
+      <span>Diario K9</span>
+      <span class="sync-pill" onclick="openSyncModal()" title="Estado de sincronización en tiempo real">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncStatusText">Sincronizar</span>
+      </span>
     </div>
+    <button class="hbtn hide-on-mobile" id="fullscreenBtn" onclick="toggleFullScreen()" title="Pantalla completa">⛶ Pantalla</button>
+    <button class="hbtn hide-on-mobile" onclick="openDogModal()">➕ Perro</button>
+    <button class="hbtn" onclick="openSyncModal()" title="Sincronizar"><span class="hide-on-mobile">🔄 Sincronizar</span><span style="display:inline" class="only-mobile-icon">🔄</span></button>
+    <button class="hbtn" onclick="openPdfModal()">📄 PDF</button>
+    <span class="color-lbl">Color:</span>
+    <input type="color" class="color-inp" id="monthColorPicker" value="#1a5c38" onchange="onColorChange(this.value)" title="Color del mes">
+    <button class="hbtn mobile-view-toggle" id="viewModeBtn" onclick="toggleMobileViewMode()">📋 Lista</button>
+  </div>
+  <div class="header-controls">
+    <button class="nav-btn" onclick="changeMonth(-1)">◀</button>
+    <select class="hsel" id="monthSelect" onchange="onMonthChange()">
+      <option value="0">Enero</option><option value="1">Febrero</option>
+      <option value="2">Marzo</option><option value="3">Abril</option>
+      <option value="4">Mayo</option><option value="5">Junio</option>
+      <option value="6">Julio</option><option value="7">Agosto</option>
+      <option value="8">Septiembre</option><option value="9">Octubre</option>
+      <option value="10">Noviembre</option><option value="11">Diciembre</option>
+    </select>
+    <select class="hsel" id="yearSelect" onchange="onMonthChange()"></select>
+    <button class="nav-btn" onclick="changeMonth(1)">▶</button>
+    <button class="hbtn" id="todayBtn" onclick="goToToday()" title="Ir a la fecha actual">📍 Hoy</button>
+  </div>
+</header>
 
-    <div class="header-status-group">
-      <div class="header-actions">
-        <!-- Selector de País Elegante -->
-        <div class="country-select-container">
-          <select class="select-country-header" id="country-select" aria-label="Seleccionar País">
-            <option value="ES" selected>🇪🇸 ES</option>
-            <option value="FR">🇫🇷 FR</option>
-            <option value="PT">🇵🇹 PT</option>
-            <option value="EU">🇪🇺 UE</option>
-          </select>
-        </div>
+<!-- MOBILE / TABLET DOG BAR -->
+<div class="mobile-dog-bar" id="mobileDogBar"></div>
 
-        <button class="btn-icon-header btn-europe" id="btn-open-europe" title="Ranking oficial de los 27 países de Europa">
-          <span>🇪🇺</span>
-          <span class="btn-text-label">Ranking UE</span>
-        </button>
-
-        <button class="btn-icon-header btn-accent" id="btn-open-calc" title="Calculadora de llenado de depósito">
-          <span>🧮</span>
-          <span class="btn-text-label">Calculadora</span>
-        </button>
-
-        <button class="btn-icon-header" id="btn-open-favs" title="Ver mis gasolineras favoritas">
-          <span>⭐</span>
-          <span class="btn-text-label">Favoritas</span>
-          <span class="badge-counter" id="fav-count-badge" style="display: none;">0</span>
-        </button>
-
-        <button class="btn-icon-header" id="btn-refresh" title="Actualizar datos oficiales">
-          <span>🔄</span>
-        </button>
-      </div>
+<!-- LAYOUT -->
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">Mis Perros</div>
+    <div id="dogList"></div>
+    <button class="add-dog-btn" onclick="openDogModal()">➕ Añadir perro</button>
+  </aside>
+  <main class="main-content">
+    <div id="onboarding" class="onboarding hidden">
+      <div class="onboarding-emoji">🐾</div>
+      <h2>¡Bienvenido al Diario K9!</h2>
+      <p>Registra los entrenamientos de tus perros de búsqueda y rescate. Empieza añadiendo tu primer perro.</p>
+      <button class="btn-primary" onclick="openDogModal()">➕ Añadir mi primer perro</button>
     </div>
-  </header>
-
-  <!-- Barra de Filtros y Combustibles Adaptada a Móviles y Desktop -->
-  <section class="filters-bar">
-    <!-- Selector rápido de carburante (Swipe horizontal táctil - Diésel por defecto) -->
-    <div class="fuel-pills-row" id="fuel-selector-pills">
-      <!-- Generado dinámicamente -->
-    </div>
-
-    <!-- Fila Principal de Búsqueda y Región -->
-    <div class="filters-main-row">
-      <button class="btn-gps-trigger" id="btn-gps" title="Buscar gasolineras más cercanas a mi GPS">
-        <span>📍</span>
-        <span class="gps-btn-text">Mi GPS</span>
-      </button>
-
-      <select class="select-custom select-region-main" id="province-select" aria-label="Seleccionar Provincia o Región">
-        <!-- Provincias cargadas desde provinces.js -->
-      </select>
-
-      <div class="search-input-wrap">
-        <input type="text" class="input-search-custom" id="search-input" placeholder="🔍 Buscar calle, marca...">
+    <div id="calendarContainer" class="calendar-container hidden">
+      <div id="printHeader" class="print-only-header"></div>
+      <div class="calendar-scroll-wrap" id="calendarScrollWrap">
+        <div class="calendar-grid" id="calendarGrid"></div>
       </div>
-
-      <button class="btn-toggle-filters" id="btn-toggle-filters" title="Mostrar más filtros de búsqueda">
-        <span>⚙️</span>
-        <span class="filters-toggle-label">Filtros</span>
-      </button>
+      <div id="monthlySummaryContainer" class="monthly-summary"></div>
     </div>
-
-    <!-- Cajón de Filtros Secundarios / Avanzados (Colapsable en móvil para no tapar el mapa) -->
-    <div class="filters-drawer-content" id="filters-drawer">
-      <select class="select-custom" id="municipality-select" aria-label="Seleccionar Municipio">
-        <option value="">Todos los municipios</option>
-      </select>
-
-      <select class="select-custom" id="brand-filter" aria-label="Filtrar por Marca">
-        <option value="ALL">Todas las marcas</option>
-        <option value="LOWCOST">Solo Low Cost</option>
-        <option value="TRADITIONAL">Solo Tradicionales</option>
-      </select>
-
-      <select class="select-custom" id="radius-filter" aria-label="Radio de distancia">
-        <option value="0">Toda la región</option>
-        <option value="5">Radio 5 km (GPS)</option>
-        <option value="10">Radio 10 km (GPS)</option>
-        <option value="20">Radio 20 km (GPS)</option>
-        <option value="50">Radio 50 km (GPS)</option>
-      </select>
-
-      <select class="select-custom" id="sort-filter" aria-label="Ordenar resultados">
-        <option value="price">Más baratas primero</option>
-        <option value="distance">Más cercanas (GPS)</option>
-      </select>
-
-      <label class="toggle-switch-wrapper" title="Ocultar las que estén cerradas en este momento">
-        <input type="checkbox" id="filter-open-only">
-        <span>Solo abiertas</span>
-      </label>
-    </div>
-  </section>
-
-  <!-- Contenedor Principal (Panel Dividido: Lista + Mapa) -->
-  <main class="main-container">
-    <!-- Panel Lateral: Listado de Tarjetas -->
-    <aside class="sidebar-panel">
-      <div class="sidebar-header">
-        <div class="results-meta">
-          <h2>Estaciones de Servicio</h2>
-          <span id="results-count">Cargando estaciones...</span>
-        </div>
-
-        <div class="tabs-group">
-          <button class="tab-btn active" data-tab="all">Todas</button>
-          <button class="tab-btn" data-tab="cheapest">👑 Top 15</button>
-          <button class="tab-btn" data-tab="favorites">⭐ Favoritas</button>
-        </div>
-      </div>
-
-      <div class="stations-list-scroll" id="stations-list-container">
-        <!-- Tarjetas inyectadas por JS -->
-      </div>
-    </aside>
-
-    <!-- Panel del Mapa Interactivo -->
-    <section class="map-panel">
-      <div id="map"></div>
-    </section>
   </main>
+</div>
 
-  <!-- Selector Móvil de Vista (Mapa / Lista / Precios UE-27) -->
-  <div class="mobile-view-toggle">
-    <button class="btn-mobile-toggle active" id="view-toggle-map">🗺️ Mapa</button>
-    <button class="btn-mobile-toggle" id="view-toggle-list">📋 Lista</button>
-    <button class="btn-mobile-toggle btn-mobile-eu" id="view-toggle-eu" onclick="App.openEuropeModal()">🇪🇺 UE-27</button>
-  </div>
+<div class="toast" id="toast"></div>
+<div class="lightbox hidden" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightboxImg" src="" alt="">
+</div>
 
-  <!-- Modal: Calculadora de Repostaje y Ahorro -->
-  <div class="modal-overlay" id="calc-modal">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3>🧮 Calculadora de Repostaje</h3>
-        <button class="btn-close-modal" onclick="App.closeModal('calc-modal')">&times;</button>
+<!-- ═══ MODAL: DAY ═══ -->
+<div class="modal-overlay hidden" id="dayModalOverlay" onclick="closeDayModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header" id="dayModalHeader">
+      <div>
+        <div class="modal-title" id="dayModalTitle">Día</div>
+        <div style="font-size:.78rem;opacity:.85" id="dayModalDog"></div>
       </div>
-      <div class="modal-body">
-        <div class="calc-station-banner">
-          <div class="calc-station-meta">
-            <span class="calc-fuel-badge" id="calc-fuel-name">🛢️ Diésel / Gasóleo A</span>
-            <strong class="calc-station-name-text" id="calc-station-name">Media de la zona</strong>
-          </div>
-          <div class="calc-station-price-box">
-            <small>Precio aplicado</small>
-            <strong id="calc-applied-price">-- €/L</strong>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn-toggle-all" id="toggleAllSessionsBtn" onclick="toggleAllSessions()" title="Desplegar o plegar todas las sesiones" style="display:none">⇕ Plegar todas</button>
+        <button class="modal-close" onclick="closeDayModal()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="dayModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn-add-session" onclick="addSession()">➕ Añadir Sesión</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: DOG ═══ -->
+<div class="modal-overlay hidden" id="dogModalOverlay" onclick="closeDogModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header" style="background:var(--primary)">
+      <div class="modal-title" id="dogModalTitle">Añadir Perro</div>
+      <button class="modal-close" onclick="closeDogModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Foto del perro</label>
+        <div class="dog-photo-wrap">
+          <div class="dog-photo-preview" id="dogPhotoPreview">🐕</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <input type="file" id="dogPhotoInput" accept="image/*" style="display:none" onchange="onDogPhotoChange(event)">
+            <button class="dog-photo-btn" onclick="document.getElementById('dogPhotoInput').click()">📷 Subir foto</button>
+            <button class="dog-photo-btn" id="dogPhotoRemoveBtn" onclick="removeDogPhoto()" style="display:none;color:#ef4444;border-color:#fecaca">🗑️ Quitar foto</button>
           </div>
         </div>
-        <div id="calc-adblue-hint" class="calc-adblue-hint" style="display: none;"></div>
-
-        <div class="calc-field-group">
-          <label class="calc-label">Capacidad de tu depósito:</label>
-          <div class="presets-row">
-            <button type="button" class="btn-preset-tank" data-liters="15">15 L</button>
-            <button type="button" class="btn-preset-tank" data-liters="40">40 L</button>
-            <button type="button" class="btn-preset-tank active" data-liters="50">50 L</button>
-            <button type="button" class="btn-preset-tank" data-liters="60">60 L</button>
-            <button type="button" class="btn-preset-tank" data-liters="70">70 L</button>
-          </div>
-          <input type="number" id="calc-tank-capacity" class="select-custom" value="50" min="10" max="150" style="margin-top: 0.4rem;" placeholder="Litros de capacidad">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Avatar (si no hay foto)</label>
+        <div class="avatar-selector" id="avatarSelector">
+          <span class="avatar-opt selected" data-av="🐕">🐕</span>
+          <span class="avatar-opt" data-av="🦮">🦮</span>
+          <span class="avatar-opt" data-av="🐩">🐩</span>
+          <span class="avatar-opt" data-av="🐾">🐾</span>
+          <span class="avatar-opt" data-av="🐶">🐶</span>
+          <span class="avatar-opt" data-av="⭐">⭐</span>
+          <span class="avatar-opt" data-av="🏆">🏆</span>
+          <span class="avatar-opt" data-av="🎖️">🎖️</span>
         </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" class="form-input" id="dogName" placeholder="Nombre del perro">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Raza</label>
+        <input type="text" class="form-input" id="dogBreed" placeholder="Raza">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de nacimiento</label>
+        <input type="date" class="form-input" id="dogBirth">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas</label>
+        <textarea class="form-input" id="dogNotes" rows="3" placeholder="Observaciones sobre el perro..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger hidden" id="deleteDogBtn" onclick="deleteDog()">🗑️ Eliminar</button>
+      <button class="btn-secondary" onclick="closeDogModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveDog()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
 
-        <div class="calc-field-group">
-          <div class="calc-slider-header">
-            <label class="calc-label">Nivel actual del depósito:</label>
-            <span id="calc-level-val-text" class="calc-slider-val">0% (Llenar depósito)</span>
-          </div>
-          <input type="range" id="calc-fuel-level" class="slider-custom" min="0" max="90" step="5" value="0">
+<!-- ═══ MODAL: SYNC & INSTALL ═══ -->
+<div class="modal-overlay hidden" id="syncModalOverlay" onclick="closeSyncModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:580px">
+    <div class="modal-header" style="background:#1e40af">
+      <div class="modal-title">🔄 Sincronización Automática e Instalación</div>
+      <button class="modal-close" onclick="closeSyncModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- REALTIME AUTO SYNC -->
+      <div class="sync-section highlight">
+        <div class="sync-section-title">⚡ Sincronización en la Nube (PC, Tablet y Móvil)</div>
+        <p>Escribe el <strong>mismo Código de Equipo</strong> en tu <strong>PC</strong>, en la <strong>Redmi Pad 2 Pro</strong> y en el <strong>Redmi Note 13 Pro</strong>. Funciona con cualquier Wi‑Fi o con datos móviles (4G/5G).</p>
+        <div class="sync-btn-row">
+          <input type="text" class="sync-room-input" id="syncRoomInput" placeholder="Ej: UCAR-K9-SYNC">
+          <button class="btn-sync green" onclick="saveSyncRoom()">🔗 Conectar</button>
+          <button class="btn-sync blue" onclick="forcePullSync()" title="Descargar todos los datos de la nube">⬇️ Descargar de la Nube</button>
+          <button class="btn-sync amber" onclick="forcePushSync()" title="Subir los datos de este dispositivo a la nube">⬆️ Subir a la Nube</button>
+          <button class="btn-sync gray" onclick="forceAppUpdate()" title="Actualizar app y limpiar caché">🔄 Recargar App</button>
         </div>
+        <div id="liveSyncStatusMsg" style="font-size:.78rem;color:#166534;font-weight:600"></div>
+      </div>
 
-        <div class="calc-result-card">
-          <div class="result-main-row">
-            <div>
-              <span class="calc-label">Coste total del llenado</span>
-              <div class="result-main-price" id="calc-res-cost">-- €</div>
-            </div>
-            <div style="text-align: right;">
-              <span class="calc-label">Litros a repostar</span>
-              <div class="result-main-liters" id="calc-res-liters">-- L</div>
-            </div>
+      <!-- INSTALL ON REDMI PAD 2 PRO & REDMI NOTE 13 PRO -->
+      <div class="sync-section" id="installGuideSection">
+        <div class="sync-section-title" style="display:flex;align-items:center;gap:8px">
+          <img src="./huella-k9.png" alt="Huella K9" style="width:32px;height:32px;object-fit:contain">
+          <span>📲 Instalar App a pantalla completa (Huella K9)</span>
+        </div>
+        <div id="secureOriginStatus" style="padding:8px 10px;border-radius:6px;font-size:.8rem;font-weight:600"></div>
+        <p><strong>Dirección Wi-Fi local de tu PC:</strong></p>
+        <div id="lanUrlBox" style="background:#fff;border:1.5px solid #cbd5e1;padding:8px 12px;border-radius:6px;font-family:monospace;font-weight:700;font-size:.88rem;color:#1e40af;text-align:center">http://192.168.1.143:8090/dog-training.html</div>
+        <div id="qrContainer" style="display:flex;justify-content:center;margin:4px 0"></div>
+        <div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:8px;padding:10px;font-size:.81rem;color:#78350f;display:flex;flex-direction:column;gap:8px">
+          <div><strong>¿Por qué salía la barra de dirección arriba?</strong><br>
+          Si pulsas «Añadir a pantalla de inicio» sobre una IP local (<code>http://192.168.1.143:8090</code>) sin autorizar antes esa IP en Chrome, Android solo crea un <em>acceso directo web</em> (con barra de dirección arriba) en lugar de instalar la <strong>App real a pantalla completa</strong>.</div>
+          <hr style="border:none;border-top:1px solid #fde68a">
+          <div><strong>Pasos para que se abra como App real SIN barra arriba y con tu icono Malinois:</strong></div>
+          <div class="sync-btn-row">
+            <button class="btn-sync amber" onclick="copyTextValue(location.origin, 'IP copiada: ' + location.origin)">1️⃣ Copiar mi IP (http://192.168.1.143:8090)</button>
+            <button class="btn-sync blue" onclick="copyTextValue('chrome://flags/#unsafely-treat-insecure-origin-as-secure', 'Copiado. Pégalo en una pestaña de Chrome')">2️⃣ Copiar enlace chrome://flags</button>
           </div>
+          <ol style="padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:.78rem;color:#92400e">
+            <li>Borra de la pantalla de inicio de tu tablet/móvil el icono anterior que tenía barra arriba.</li>
+            <li>Pulsa el botón <strong>2️⃣ Copiar enlace chrome://flags</strong>, abre una pestaña nueva en Chrome, pégalo en la barra de arriba y entra.</li>
+            <li>En el recuadro <em>"Insecure origins treated as secure"</em> escribe: <code>http://192.168.1.143:8090</code>, cámbialo a <strong>Enabled</strong> y pulsa <strong>Relaunch</strong>.</li>
+            <li>Al volver a esta página, toca <strong>«📲 Instalar App»</strong> (o el menú <strong>⋮ → Instalar aplicación</strong>). Ahora se instalará como App nativa sin barra arriba y con el icono del Malinois.</li>
+          </ol>
+          <div class="sync-btn-row" style="margin-top:4px">
+            <button class="btn-sync green" onclick="toggleFullScreen();closeSyncModal()">⛶ Poner a Pantalla Completa ahora</button>
+            <button class="btn-sync gray" id="toggleHideInstallBtn" onclick="toggleInstallButtonVisibility()">🙈 Ocultar botón «Instalar App»</button>
+          </div>
+        </div>
+      </div>
 
-          <div class="calc-breakdown-grid">
-            <div class="breakdown-box">
-              <span class="b-label">Coste con precio medio</span>
-              <span class="b-val" id="calc-cost-avg">-- €</span>
-            </div>
-            <div class="breakdown-box">
-              <span class="b-label" style="color: #34d399;">Ahorro en este llenado</span>
-              <span class="b-val text-green" id="calc-res-save-avg">0.00 €</span>
-            </div>
-            <div class="breakdown-box span-2" style="grid-column: span 2; border-top: 1px dashed rgba(255,255,255,0.12); padding-top: 0.5rem; margin-top: 0.2rem;">
-              <span class="b-label">Ahorro anual estimado (2 repostajes/mes)</span>
-              <span class="b-val" style="color: var(--accent-amber);" id="calc-res-save-annual">0.00 € al año</span>
-            </div>
-          </div>
+      <!-- EXPORT / IMPORT BACKUP -->
+      <div class="sync-section">
+        <div class="sync-section-title">📥 Copia de seguridad en archivo (.json)</div>
+        <div class="sync-btn-row">
+          <button class="btn-sync green" onclick="exportJSON()">⬇️ Descargar backup.json</button>
+          <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="onImportFile(event)">
+          <button class="btn-sync blue" onclick="document.getElementById('importFileInput').click()">📂 Importar archivo JSON</button>
+        </div>
+        <div id="importFileStatus" style="font-size:.8rem;color:var(--text-muted)"></div>
+      </div>
+
+      <!-- MANUAL CODE -->
+      <div class="sync-section">
+        <div class="sync-section-title">📋 Código manual (sin internet)</div>
+        <div class="sync-btn-row">
+          <button class="btn-sync amber" onclick="generateSyncCode()">🔑 Generar código</button>
+          <button class="btn-sync green" onclick="copySyncCode()" id="copySyncBtn" style="display:none">📋 Copiar</button>
+        </div>
+        <div class="sync-code-box hidden" id="syncCodeBox"></div>
+        <textarea class="sync-import-area" id="syncPasteArea" placeholder="O pega aquí un código manual de otro dispositivo..."></textarea>
+        <div class="sync-btn-row">
+          <button class="btn-sync blue" onclick="importSyncCode('merge')">🔀 Combinar</button>
+          <button class="btn-sync red" onclick="importSyncCode('replace')">♻️ Reemplazar todo</button>
         </div>
       </div>
     </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeSyncModal()">Cerrar</button></div>
   </div>
+</div>
 
-  <!-- Modal: Mis Gasolineras Favoritas -->
-  <div class="modal-overlay" id="favs-modal">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3>⭐ Mis Gasolineras Favoritas</h3>
-        <button class="btn-close-modal" onclick="App.closeModal('favs-modal')">&times;</button>
+<!-- ═══ MODAL: PDF ═══ -->
+<div class="modal-overlay hidden" id="pdfModalOverlay" onclick="closePdfModal(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:520px">
+    <div class="modal-header" style="background:#7c3aed">
+      <div class="modal-title">📄 Exportar a PDF / Imprimir</div>
+      <button class="modal-close" onclick="closePdfModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">Tamaño de papel</div>
+      <div class="pdf-options" id="pdfSizeOptions">
+        <div class="pdf-opt-card selected" data-size="A4" data-orient="portrait" onclick="selectPdfOpt(this)"><div class="pdf-opt-icon">📄</div><div class="pdf-opt-label">A4 Vertical</div><div class="pdf-opt-desc">210×297 mm · Estándar</div></div>
+        <div class="pdf-opt-card" data-size="A4" data-orient="landscape" onclick="selectPdfOpt(this)"><div class="pdf-opt-icon">📋</div><div class="pdf-opt-label">A4 Horizontal</div><div class="pdf-opt-desc">297×210 mm · Amplio</div></div>
+        <div class="pdf-opt-card" data-size="A3" data-orient="portrait" onclick="selectPdfOpt(this)"><div class="pdf-opt-icon">🗒️</div><div class="pdf-opt-label">A3 Vertical</div><div class="pdf-opt-desc">297×420 mm · Gran formato</div></div>
+        <div class="pdf-opt-card" data-size="A3" data-orient="landscape" onclick="selectPdfOpt(this)"><div class="pdf-opt-icon">🗺️</div><div class="pdf-opt-label">A3 Horizontal</div><div class="pdf-opt-desc">420×297 mm · Extra ancho</div></div>
+        <div class="pdf-opt-card" data-size="A5" data-orient="portrait" onclick="selectPdfOpt(this)"><div class="pdf-opt-icon">📓</div><div class="pdf-opt-label">A5 Vertical</div><div class="pdf-opt-desc">148×210 mm · Compacto</div></div>
+        <div class="pdf-opt-card" data-size="letter" data-orient="portrait" onclick="selectPdfOpt(this)"><div class="pdf-opt-icon">📃</div><div class="pdf-opt-label">Carta</div><div class="pdf-opt-desc">216×279 mm · US Letter</div></div>
       </div>
-      <div class="modal-body">
-        <div class="favs-list" id="favs-list-container">
-          <!-- Inyectado dinámicamente -->
+      <div style="font-size:.82rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">Contenido</div>
+      <div class="pdf-options">
+        <div class="pdf-opt-card selected" data-content="month" onclick="selectPdfContent(this)"><div class="pdf-opt-icon">🗓️</div><div class="pdf-opt-label">Mes actual</div><div class="pdf-opt-desc">Calendario con resumen</div></div>
+        <div class="pdf-opt-card" data-content="detail" onclick="selectPdfContent(this)"><div class="pdf-opt-icon">📊</div><div class="pdf-opt-label">Detalle completo</div><div class="pdf-opt-desc">Todas las sesiones del mes</div></div>
+      </div>
+      <div class="pdf-preview-info">ℹ️ Selecciona <strong>«Guardar como PDF»</strong> en el diálogo. Activa <strong>«Gráficos de fondo»</strong> para conservar los colores.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closePdfModal()">Cancelar</button>
+      <button class="btn-primary" onclick="doPrint()" style="background:#7c3aed">🖨️ Imprimir / PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  CONSTANTS
+// ════════════════════════════════════════════════
+const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAYS_SHORT=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+const DEFAULT_TAREAS=['Rastreo','Búsqueda en área','Obediencia','Agilidad','Socialización','Trabajo en ruinas','Trabajo en agua','Búsqueda urbana','Señalización','Libre / Otro'];
+const DEFAULT_MODALIDADES=['Práctica obligatoria','Formación obligatoria','Entrenamiento libre','Simulacro / Ejercicio','Operativo real','Seminario / Curso','Certificación / Homologación'];
+const DEFAULT_DURACIONES=['15 min','30 min','45 min','1 h','1 h 30 min','2 h','2 h 30 min','3 h','Más de 3 h'];
+const DEFAULT_LUGARES=['Campo abierto','Bosque','Zona urbana','Zona de ruinas','Agua / Río','Centro de entrenamiento','Montaña','Playa','Otro'];
+const DEFAULT_TIEMPOS=['☀️ Soleado','⛅ Nublado','🌧️ Lluvia','🌩️ Tormenta','❄️ Nieve','💨 Viento fuerte','🌫️ Niebla','🥵 Calor extremo','🥶 Frío extremo'];
+const DEFAULT_VIENTOS=['💨 A favor','🌬️ En contra','↔️ De costado','🌀 Cambiante / Remolinos','🍃 Brisa suave','🌪️ Racheado fuerte','🧘 Calma / Sin viento'];
+const DEFAULT_PARTICIPANTES=[];
+
+const RATINGS=[
+  {val:'muy-bien',label:'Muy bien',color:'#22c55e',textColor:'#fff'},
+  {val:'bien',label:'Bien',color:'#16a34a',textColor:'#fff'},
+  {val:'regular',label:'Regular',color:'#f59e0b',textColor:'#fff'},
+  {val:'mal',label:'Mal',color:'#ea580c',textColor:'#fff'},
+  {val:'muy-mal',label:'Muy mal',color:'#dc2626',textColor:'#fff'}
+];
+
+// ════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════
+let state = {
+  dogs: [],
+  sessions: {},            // key: dogId_YYYY-MM-DD → array of session objects
+  monthColors: {},         // key: YYYY-MM → hex
+  customOptions: { tarea:[], modalidad:[], duracion:[], lugar:[], tiempo:[], viento:[], participantes:[] },
+  monthlyImprovements: {}, // key: dogId_YYYY-MM → manual summary string
+  updatedAt: 0,            // timestamp of last modification for auto-sync
+  currentDogId: null,
+  currentYear: new Date().getFullYear(),
+  currentMonth: new Date().getMonth(),
+  editDogId: null,
+  currentDayKey: null,
+  mobileAgendaMode: false
+};
+
+const DEVICE_ID = 'dev_' + Math.random().toString(36).slice(2, 10);
+let syncRoom = localStorage.getItem('k9_syncRoom') || 'UCAR-K9-SYNC';
+let mqttClient = null;
+let isApplyingRemote = false;
+
+// ════════════════════════════════════════════════
+//  STORAGE & REALTIME SYNC
+// ════════════════════════════════════════════════
+function saveAll(skipRemote = false) {
+  try {
+    if (!isApplyingRemote && !skipRemote) {
+      state.updatedAt = Date.now();
+    }
+    localStorage.setItem('k9_dogs', JSON.stringify(state.dogs));
+    localStorage.setItem('k9_sessions', JSON.stringify(state.sessions));
+    localStorage.setItem('k9_monthColors', JSON.stringify(state.monthColors));
+    localStorage.setItem('k9_customOptions', JSON.stringify(state.customOptions));
+    localStorage.setItem('k9_monthlyImprovements', JSON.stringify(state.monthlyImprovements));
+    localStorage.setItem('k9_updatedAt', String(state.updatedAt || 0));
+    localStorage.setItem('k9_currentDogId', state.currentDogId || '');
+    if (!isApplyingRemote && !skipRemote) {
+      pushRealtimeSync();
+    }
+  } catch(e) { showToast('⚠️ Almacenamiento lleno. Exporta un backup.'); }
+}
+
+function loadAll() {
+  try {
+    state.dogs = JSON.parse(localStorage.getItem('k9_dogs') || '[]');
+    state.sessions = JSON.parse(localStorage.getItem('k9_sessions') || '{}');
+    state.monthColors = JSON.parse(localStorage.getItem('k9_monthColors') || '{}');
+    const loadedOpts = JSON.parse(localStorage.getItem('k9_customOptions') || '{}');
+    state.customOptions = {
+      tarea: loadedOpts.tarea || [],
+      modalidad: loadedOpts.modalidad || [],
+      duracion: loadedOpts.duracion || [],
+      lugar: loadedOpts.lugar || [],
+      tiempo: loadedOpts.tiempo || [],
+      viento: loadedOpts.viento || [],
+      participantes: loadedOpts.participantes || []
+    };
+    state.monthlyImprovements = JSON.parse(localStorage.getItem('k9_monthlyImprovements') || '{}');
+    state.updatedAt = parseInt(localStorage.getItem('k9_updatedAt') || '0', 10);
+    state.currentDogId = localStorage.getItem('k9_currentDogId') || null;
+    if (state.currentDogId && !state.dogs.find(d=>d.id===state.currentDogId)) state.currentDogId = null;
+    if (!state.currentDogId && state.dogs.length>0) state.currentDogId = state.dogs[0].id;
+    state.mobileAgendaMode = localStorage.getItem('k9_mobileAgendaMode') === '1';
+  } catch(e) {}
+}
+
+function setSyncStatus(mode, text) {
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncStatusText');
+  if (dot) {
+    dot.className = 'sync-dot ' + (mode || '');
+  }
+  if (txt) txt.textContent = text;
+}
+
+function getSyncPayload() {
+  return {
+    deviceId: DEVICE_ID,
+    updatedAt: state.updatedAt || Date.now(),
+    dogs: state.dogs,
+    sessions: state.sessions,
+    monthColors: state.monthColors,
+    customOptions: state.customOptions,
+    monthlyImprovements: state.monthlyImprovements,
+    version: 3
+  };
+}
+
+function applyRemotePayload(data, sourceLabel, force = false) {
+  if (!data || !Array.isArray(data.dogs) || !data.sessions) return;
+  if (!force && data.deviceId === DEVICE_ID) return;
+  const incomingTime = data.updatedAt || 0;
+  if (!force && incomingTime > 0 && state.updatedAt > 0 && incomingTime <= state.updatedAt && state.dogs.length > 0) {
+    return;
+  }
+  if (!force && data.dogs.length === 0 && state.dogs.length > 0) {
+    pushRealtimeSync();
+    return;
+  }
+
+  isApplyingRemote = true;
+  state.dogs = data.dogs;
+  state.sessions = data.sessions || {};
+  state.monthColors = data.monthColors || {};
+  state.customOptions = {
+    tarea: data.customOptions?.tarea || [],
+    modalidad: data.customOptions?.modalidad || [],
+    duracion: data.customOptions?.duracion || [],
+    lugar: data.customOptions?.lugar || [],
+    tiempo: data.customOptions?.tiempo || [],
+    viento: data.customOptions?.viento || [],
+    participantes: data.customOptions?.participantes || []
+  };
+  state.monthlyImprovements = data.monthlyImprovements || {};
+  state.updatedAt = Math.max(incomingTime, state.updatedAt || 0, Date.now());
+  if (!state.currentDogId || !state.dogs.find(d => d.id === state.currentDogId)) {
+    state.currentDogId = state.dogs[0]?.id || null;
+  }
+  saveAll(true);
+  applyMonthColor();
+  renderDogList();
+  renderCalendar();
+  if (!document.getElementById('dayModalOverlay').classList.contains('hidden') && state.currentDayKey) {
+    renderDaySessions();
+  }
+  isApplyingRemote = false;
+  setSyncStatus('online', `En vivo (${syncRoom})`);
+  if (!force) showToast(`🔄 Actualizado desde ${sourceLabel || 'otro dispositivo'}`);
+}
+
+// 1) Sincronización en la Nube HTTPS (Puerto 443 - funciona en cualquier Wi-Fi y 4G/5G)
+const CLOUD_SYNC_API = 'https://diario-k9-rescate.netlify.app/api/sync';
+
+async function forcePullSync() {
+  const cleanRoom = (syncRoom || 'UCAR-K9-SYNC').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'UCAR-K9-SYNC';
+  setSyncStatus('syncing', 'Descargando...');
+  showToast('⬇️ Descargando de la nube...');
+  try {
+    const res = await fetch(`${CLOUD_SYNC_API}?room=${encodeURIComponent(cleanRoom)}&t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (!data || !Array.isArray(data.dogs) || data.dogs.length === 0) {
+      showToast('ℹ️ No hay perros guardados en la nube para este canal.');
+      setSyncStatus('online', `En vivo (${cleanRoom})`);
+      return;
+    }
+    applyRemotePayload(data, 'Nube K9', true);
+    showToast(`✅ ¡Listo! ${data.dogs.length} perro(s) y sus sesiones cargados.`);
+  } catch (e) {
+    showToast('❌ Error de conexión con la nube: ' + e.message);
+    setSyncStatus('', 'Error conexión');
+  }
+}
+
+async function forcePushSync() {
+  const cleanRoom = (syncRoom || 'UCAR-K9-SYNC').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'UCAR-K9-SYNC';
+  setSyncStatus('syncing', 'Subiendo...');
+  showToast('⬆️ Subiendo datos a la nube...');
+  state.updatedAt = Date.now();
+  await pushLocalServerSync();
+  if (mqttClient && mqttClient.connected) {
+    try {
+      mqttClient.publish('diariok9/v3/sync/' + cleanRoom, JSON.stringify({ ping: true, deviceId: DEVICE_ID, updatedAt: state.updatedAt }), { qos: 1 });
+    } catch(e) {}
+  }
+  showToast('✅ Datos guardados y subidos a la nube');
+}
+
+async function pollLocalServerSync() {
+  const cleanRoom = (syncRoom || 'UCAR-K9-SYNC').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'UCAR-K9-SYNC';
+  const urls = [`${CLOUD_SYNC_API}?room=${encodeURIComponent(cleanRoom)}&t=${Date.now()}`];
+  if (location.protocol !== 'file:' && location.hostname !== 'diario-k9-rescate.netlify.app') {
+    urls.push(`/api/sync?room=${encodeURIComponent(cleanRoom)}&t=${Date.now()}`);
+  }
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) continue;
+      const data = await res.json();
+      setSyncStatus('online', `En vivo (${cleanRoom})`);
+      const msgEl = document.getElementById('liveSyncStatusMsg');
+      if (msgEl) msgEl.textContent = `🟢 Conectado en la nube al canal "${cleanRoom}" (funciona en cualquier Wi‑Fi o 4G/5G).`;
+      if (data && Array.isArray(data.dogs) && data.dogs.length > 0) {
+        if (state.dogs.length === 0) {
+          applyRemotePayload(data, 'Nube K9', true);
+        } else if (data.updatedAt && data.updatedAt > (state.updatedAt || 0) && data.deviceId !== DEVICE_ID) {
+          applyRemotePayload(data, 'Nube K9', false);
+        }
+      } else if ((data?.empty || !data?.dogs || data.dogs.length === 0) && state.dogs.length > 0) {
+        pushLocalServerSync();
+      }
+      return;
+    } catch (e) {}
+  }
+}
+
+async function pushLocalServerSync() {
+  const cleanRoom = (syncRoom || 'UCAR-K9-SYNC').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'UCAR-K9-SYNC';
+  const payloadStr = JSON.stringify({ ...getSyncPayload(), syncRoom: cleanRoom });
+  const urls = [`${CLOUD_SYNC_API}?room=${encodeURIComponent(cleanRoom)}`];
+  if (location.protocol !== 'file:' && location.hostname !== 'diario-k9-rescate.netlify.app') {
+    urls.push(`/api/sync?room=${encodeURIComponent(cleanRoom)}`);
+  }
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payloadStr
+      });
+      if (res.ok) {
+        const resData = await res.json().catch(() => null);
+        if (resData && resData.updatedAt) {
+          state.updatedAt = resData.updatedAt;
+          localStorage.setItem('k9_updatedAt', String(state.updatedAt));
+        }
+        setSyncStatus('online', `En vivo (${cleanRoom})`);
+      }
+    } catch (e) {}
+  }
+}
+
+// 2) Notificación instantánea entre dispositivos + respaldo en Nube HTTPS
+function initCloudRealtimeSync() {
+  if (!syncRoom) return;
+  const cleanRoom = syncRoom.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'UCAR-K9-SYNC';
+  const topic = 'diariok9/v3/sync/' + cleanRoom;
+  setSyncStatus('syncing', 'Conectando...');
+
+  if (typeof mqtt === 'undefined') {
+    setTimeout(initCloudRealtimeSync, 800);
+    return;
+  }
+
+  try {
+    if (mqttClient) {
+      try { mqttClient.end(true); } catch(e) {}
+    }
+    mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+      clientId: 'k9_' + DEVICE_ID,
+      clean: true,
+      connectTimeout: 8000,
+      reconnectPeriod: 6000
+    });
+
+    mqttClient.on('connect', () => {
+      setSyncStatus('online', `En vivo (${cleanRoom})`);
+      const msgEl = document.getElementById('liveSyncStatusMsg');
+      if (msgEl) msgEl.textContent = `🟢 Conectado en tiempo real al canal "${cleanRoom}". Cualquier cambio se sincroniza al instante.`;
+      mqttClient.subscribe(topic, { qos: 1 });
+    });
+
+    mqttClient.on('message', (t, payload) => {
+      try {
+        const data = JSON.parse(payload.toString());
+        if (data.ping) {
+          if (data.deviceId !== DEVICE_ID) setTimeout(pollLocalServerSync, 150);
+        } else {
+          applyRemotePayload(data, 'Nube K9');
+        }
+      } catch (e) {}
+    });
+
+    mqttClient.on('offline', () => pollLocalServerSync());
+    mqttClient.on('error', () => pollLocalServerSync());
+  } catch (e) {
+    pollLocalServerSync();
+  }
+}
+
+function pushRealtimeSync() {
+  const cleanRoom = (syncRoom || 'UCAR-K9-SYNC').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'UCAR-K9-SYNC';
+  setSyncStatus('syncing', 'Sincronizando...');
+  pushLocalServerSync().then(() => {
+    if (mqttClient && mqttClient.connected && syncRoom) {
+      const topic = 'diariok9/v3/sync/' + cleanRoom;
+      try {
+        const fullJson = JSON.stringify(getSyncPayload());
+        const msg = fullJson.length < 28000 ? fullJson : JSON.stringify({ ping: true, deviceId: DEVICE_ID, updatedAt: state.updatedAt });
+        mqttClient.publish(topic, msg, { qos: 1, retain: fullJson.length < 28000 }, () => {
+          setSyncStatus('online', `En vivo (${cleanRoom})`);
+        });
+      } catch (e) {}
+    }
+  });
+}
+
+async function saveSyncRoom() {
+  const val = document.getElementById('syncRoomInput').value.trim().toUpperCase();
+  if (!val) { showToast('Escribe un código de equipo'); return; }
+  syncRoom = val;
+  localStorage.setItem('k9_syncRoom', syncRoom);
+  initCloudRealtimeSync();
+  showToast(`🔗 Conectando a "${syncRoom}"...`);
+  await forcePullSync();
+}
+
+// ════════════════════════════════════════════════
+//  PWA INSTALLATION & SERVICE WORKER
+// ════════════════════════════════════════════════
+let deferredPwaPrompt = null;
+
+function isRunningStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.matchMedia('(display-mode: fullscreen)').matches ||
+         window.matchMedia('(display-mode: minimal-ui)').matches ||
+         window.navigator.standalone === true;
+}
+
+function updateInstallButtonUI() {
+  const btn = document.getElementById('installPwaBtn');
+  const toggleBtn = document.getElementById('toggleHideInstallBtn');
+  const hiddenByUser = localStorage.getItem('k9_hideInstallBtn') === '1';
+  if (!btn) return;
+  if (isRunningStandalone() || hiddenByUser || !deferredPwaPrompt) {
+    btn.classList.add('hidden');
+  } else {
+    btn.classList.remove('hidden');
+  }
+  if (toggleBtn) {
+    toggleBtn.textContent = hiddenByUser ? '👁️ Mostrar botón «Instalar App» arriba' : '🙈 Ocultar botón «Instalar App» arriba';
+  }
+}
+
+function toggleInstallButtonVisibility() {
+  const current = localStorage.getItem('k9_hideInstallBtn') === '1';
+  localStorage.setItem('k9_hideInstallBtn', current ? '0' : '1');
+  updateInstallButtonUI();
+  showToast(current ? 'Botón «Instalar App» visible de nuevo' : 'Botón «Instalar App» ocultado de la barra superior ✓');
+}
+
+let userExitedFullscreen = false;
+
+function enterFullScreenQuietly() {
+  const docEl = document.documentElement;
+  if (document.fullscreenElement || document.webkitFullscreenElement) return;
+  const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+  if (req) {
+    try {
+      const p = req.call(docEl, { navigationUI: 'hide' });
+      if (p && p.then) {
+        p.then(() => {
+          const fsBtn = document.getElementById('fullscreenBtn');
+          if (fsBtn) fsBtn.textContent = '🗗 Salir';
+          document.getElementById('installPwaBtn')?.classList.add('hidden');
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  }
+}
+
+function toggleFullScreen() {
+  const docEl = document.documentElement;
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    userExitedFullscreen = false;
+    enterFullScreenQuietly();
+  } else {
+    userExitedFullscreen = true;
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) {
+      exit.call(document).then(() => {
+        const fsBtn = document.getElementById('fullscreenBtn');
+        if (fsBtn) fsBtn.textContent = '⛶ Pantalla';
+      }).catch(() => {});
+    }
+  }
+}
+
+// En tablet (Redmi Pad 2 Pro) y móvil (Redmi Note 13 Pro), entrar en pantalla completa automáticamente
+function setupMobileAutoFullscreen() {
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  if (!isTouchDevice) return;
+  const autoFsHandler = (e) => {
+    if (userExitedFullscreen) return;
+    if (e.target && e.target.closest && e.target.closest('#fullscreenBtn, select, input[type="file"], input[type="color"]')) return;
+    if (!window.matchMedia('(display-mode: fullscreen)').matches &&
+        !window.matchMedia('(display-mode: standalone)').matches &&
+        !document.fullscreenElement && !document.webkitFullscreenElement) {
+      enterFullScreenQuietly();
+    }
+  };
+  document.addEventListener('pointerup', autoFsHandler);
+  document.addEventListener('click', autoFsHandler);
+}
+setupMobileAutoFullscreen();
+
+function updateInstallStatusBanner() {
+  const el = document.getElementById('secureOriginStatus');
+  if (!el) return;
+  if (isRunningStandalone()) {
+    el.style.background = '#dcfce7';
+    el.style.color = '#166534';
+    el.style.border = '1px solid #86efac';
+    el.innerHTML = '✅ <strong>App ejecutándose en modo ventana completa (sin barra de dirección).</strong>';
+  } else if (window.isSecureContext && 'serviceWorker' in navigator) {
+    el.style.background = '#dcfce7';
+    el.style.color = '#166534';
+    el.style.border = '1px solid #86efac';
+    el.innerHTML = '🟢 <strong>Chrome ya tiene autorizado el origen local.</strong> Ya puedes pulsar el menú <strong>⋮ → Instalar aplicación</strong> (o el botón Instalar) para que se instale sin barra arriba y con el icono del Malinois.';
+  } else {
+    el.style.background = '#ffedd5';
+    el.style.color = '#9a3412';
+    el.style.border = '1px solid #fdba74';
+    el.innerHTML = '🟠 <strong>Chrome aún está en modo página normal en este dispositivo.</strong> Sigue los 4 pasos de abajo una sola vez para quitar la barra de dirección de arriba.';
+  }
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPwaPrompt = e;
+  const btn = document.getElementById('installPwaBtn');
+  if (btn && !isRunningStandalone()) {
+    btn.classList.remove('hidden');
+    btn.innerHTML = '📲 Instalar App Ahora';
+  }
+  updateInstallStatusBanner();
+});
+
+window.addEventListener('appinstalled', () => {
+  localStorage.setItem('k9_hideInstallBtn', '1');
+  updateInstallButtonUI();
+  showToast('🎉 App Diario K9 instalada correctamente');
+});
+
+updateInstallButtonUI();
+
+function copyTextValue(txt, toastMsg) {
+  navigator.clipboard.writeText(txt).then(() => {
+    showToast(toastMsg || 'Copiado ✓');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+    showToast(toastMsg || 'Copiado ✓');
+  });
+}
+
+async function installPWA() {
+  if (deferredPwaPrompt) {
+    deferredPwaPrompt.prompt();
+    const { outcome } = await deferredPwaPrompt.userChoice;
+    if (outcome === 'accepted') {
+      localStorage.setItem('k9_hideInstallBtn', '1');
+      updateInstallButtonUI();
+      showToast('🎉 App instalada en tu dispositivo');
+    }
+    deferredPwaPrompt = null;
+  } else {
+    openSyncModal();
+    setTimeout(() => {
+      document.getElementById('installGuideSection')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 150);
+  }
+}
+
+// Redirigir automáticamente si la tablet o móvil abre uno de los enlaces antiguos de prueba de Netlify
+if (location.hostname.endsWith('.netlify.app') && location.hostname !== 'diario-k9-rescate.netlify.app') {
+  location.replace('https://diario-k9-rescate.netlify.app/');
+}
+
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => {
+    if ('caches' in window) {
+      caches.keys().then(keys => keys.forEach(k => { if (k !== 'diario-k9-v26') caches.delete(k); }));
+    }
+    navigator.serviceWorker.register('./sw.js?v=26', { updateViaCache: 'none' })
+      .then(reg => {
+        reg.update();
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showToast('🚀 Nueva versión instalada. Recargando...');
+                setTimeout(() => window.location.reload(), 800);
+              }
+            });
+          }
+        });
+      })
+      .catch(() => {});
+  });
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}
+
+async function forceAppUpdate() {
+  showToast('🔄 Actualizando app y limpiando caché...');
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const reg of regs) { await reg.unregister(); }
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      for (const k of keys) { await caches.delete(k); }
+    }
+  } catch (e) {}
+  setTimeout(() => {
+    window.location.href = window.location.origin + window.location.pathname + '?reload=' + Date.now();
+  }, 400);
+}
+
+// Eliminar cualquier cookie de sesión de Netlify y cualquier etiqueta externa inyectada (ej. Powered by Netlify)
+try {
+  ['nf_jwt', '_nf_jwt', 'netlify_ab', 'nf_auth'].forEach(c => {
+    document.cookie = `${c}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    document.cookie = `${c}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.netlify.app;`;
+  });
+} catch (e) {}
+
+function removeInjectedBadges() {
+  document.querySelectorAll('iframe, [data-netlify-deploy-drawer], .netlify-badge, [id*="netlify-feedback"]').forEach(el => el.remove());
+}
+removeInjectedBadges();
+if (typeof MutationObserver !== 'undefined') {
+  new MutationObserver(removeInjectedBadges).observe(document.documentElement, { childList: true, subtree: true });
+}
+
+// ════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════
+function init() {
+  loadAll();
+  populateYearSelect();
+  document.getElementById('monthSelect').value = state.currentMonth;
+  document.getElementById('yearSelect').value = state.currentYear;
+  document.getElementById('syncRoomInput').value = syncRoom;
+  applyMobileViewModeUI();
+  applyMonthColor();
+  renderDogList();
+  renderCalendar();
+  initCloudRealtimeSync();
+  pollLocalServerSync();
+  setInterval(pollLocalServerSync, 4000);
+  window.addEventListener('focus', pollLocalServerSync);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') pollLocalServerSync();
+  });
+  if (state.dogs.length === 0 || Object.keys(state.sessions).length === 0) {
+    setTimeout(forcePullSync, 450);
+  }
+}
+
+function populateYearSelect() {
+  const sel = document.getElementById('yearSelect');
+  sel.innerHTML = '';
+  const y = new Date().getFullYear();
+  for (let i=y-3;i<=y+5;i++) {
+    const o=document.createElement('option');
+    o.value=i; o.textContent=i; sel.appendChild(o);
+  }
+  sel.value = state.currentYear;
+}
+
+function toggleMobileViewMode() {
+  state.mobileAgendaMode = !state.mobileAgendaMode;
+  localStorage.setItem('k9_mobileAgendaMode', state.mobileAgendaMode ? '1' : '0');
+  applyMobileViewModeUI();
+  renderCalendar();
+}
+
+function applyMobileViewModeUI() {
+  const grid = document.getElementById('calendarGrid');
+  const btn = document.getElementById('viewModeBtn');
+  if (grid) grid.classList.toggle('agenda-mode', state.mobileAgendaMode);
+  if (btn) btn.innerHTML = state.mobileAgendaMode ? '📅 Cuadrícula' : '📋 Lista';
+}
+
+// ════════════════════════════════════════════════
+//  MONTH COLOR
+// ════════════════════════════════════════════════
+function getMonthColorKey() { return `${state.currentYear}-${String(state.currentMonth+1).padStart(2,'0')}`; }
+function applyMonthColor() {
+  const color = state.monthColors[getMonthColorKey()] || '#1a5c38';
+  document.documentElement.style.setProperty('--month-color', color);
+  const metaTheme = document.getElementById('metaThemeColor');
+  if (metaTheme) metaTheme.setAttribute('content', color);
+  document.getElementById('monthColorPicker').value = color;
+}
+function goToToday() {
+  const now = new Date();
+  state.currentMonth = now.getMonth();
+  state.currentYear  = now.getFullYear();
+  populateYearSelect();
+  document.getElementById('monthSelect').value = state.currentMonth;
+  document.getElementById('yearSelect').value  = state.currentYear;
+  applyMonthColor();
+  renderCalendar();
+  setTimeout(() => {
+    const todayEl = document.querySelector('.day-cell.today');
+    if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 80);
+  showToast(`📅 Hoy: ${now.getDate()} de ${MONTHS[state.currentMonth]} de ${state.currentYear}`);
+}
+function onColorChange(val) {
+  state.monthColors[getMonthColorKey()] = val;
+  document.documentElement.style.setProperty('--month-color', val);
+  saveAll();
+}
+function onMonthChange() {
+  state.currentMonth = parseInt(document.getElementById('monthSelect').value);
+  state.currentYear  = parseInt(document.getElementById('yearSelect').value);
+  applyMonthColor(); renderCalendar();
+}
+function changeMonth(dir) {
+  state.currentMonth += dir;
+  if (state.currentMonth>11){state.currentMonth=0;state.currentYear++;}
+  if (state.currentMonth<0) {state.currentMonth=11;state.currentYear--;}
+  document.getElementById('monthSelect').value = state.currentMonth;
+  document.getElementById('yearSelect').value  = state.currentYear;
+  applyMonthColor(); renderCalendar();
+}
+
+// ════════════════════════════════════════════════
+//  CUSTOM OPTIONS
+// ════════════════════════════════════════════════
+function getOptions(field) {
+  const defaults = { tarea:DEFAULT_TAREAS, modalidad:DEFAULT_MODALIDADES, duracion:DEFAULT_DURACIONES, lugar:DEFAULT_LUGARES, tiempo:DEFAULT_TIEMPOS, viento:DEFAULT_VIENTOS, participantes:DEFAULT_PARTICIPANTES };
+  return [...(defaults[field]||[]), ...(state.customOptions[field]||[])];
+}
+const FIELD_EMOJIS = {
+  tiempo: ['☀️','⛅','🌧️','🌩️','❄️','🌫️','💨','🥵','🥶','🌈','☔','🌪️'],
+  viento: ['💨','🌬️','↔️','🌀','🍃','🌪️','🧘','⚡','🧭','🌊','🌾']
+};
+
+function addCustomOption(field, val, selectEl) {
+  if (!val) return;
+  if (!state.customOptions[field]) state.customOptions[field] = [];
+  if (!state.customOptions[field].includes(val) && !getOptions(field).includes(val)) {
+    state.customOptions[field].push(val);
+    saveAll();
+  }
+  let found = false;
+  for (let o of selectEl.options) { if (o.value===val){selectEl.value=val;found=true;break;} }
+  if (!found) {
+    const opt = document.createElement('option');
+    opt.value=val; opt.textContent=val;
+    selectEl.insertBefore(opt, selectEl.lastElementChild);
+    selectEl.value = val;
+  }
+  selectEl.dispatchEvent(new Event('change'));
+}
+
+function buildSelectHTML(field, currentVal, idx) {
+  const opts = getOptions(field);
+  const emojis = FIELD_EMOJIS[field] || null;
+  const defaultEmoji = emojis ? emojis[0] : '';
+  return `<div class="custom-sel-wrap">
+    <select class="field-select" data-field="${field}" data-idx="${idx}" onchange="onSelectChange(this,'${field}',${idx})">
+      <option value="">— Seleccionar —</option>
+      ${opts.map(o=>`<option value="${o}"${currentVal===o?' selected':''}>${o}</option>`).join('')}
+      <option value="__add__">➕ Añadir nueva opción...</option>
+    </select>
+    <div class="add-opt-box hidden" id="addOptBox_${field}_${idx}">
+      <div class="add-opt-row">
+        ${emojis ? `<button type="button" class="add-opt-icon-btn" id="addOptIconBtn_${field}_${idx}"
+          onclick="toggleEmojiPalette('${field}',${idx})" title="Elegir icono">
+          <span id="addOptIconVal_${field}_${idx}">${defaultEmoji}</span> ▾
+        </button>` : ''}
+        <input class="add-opt-input" type="text" placeholder="Nombre de la opción..." id="addOptInput_${field}_${idx}"
+          onkeydown="if(event.key==='Enter'){confirmAddOpt('${field}',${idx})}">
+        <button class="add-opt-confirm" onclick="confirmAddOpt('${field}',${idx})" title="Guardar">✓</button>
+        <button class="add-opt-cancel" onclick="cancelAddOpt('${field}',${idx})" title="Cancelar">✕</button>
+      </div>
+      ${emojis ? `<div class="add-opt-palette" id="addOptPalette_${field}_${idx}">
+        <span class="palette-title">Toca un icono para asignarlo:</span>
+        <div class="palette-emojis">
+          ${emojis.map((em, i) => `<span class="emoji-chip${i===0?' selected':''}" onclick="selectOptEmoji('${field}',${idx},'${em}')">${em}</span>`).join('')}
+        </div>
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
+function onSelectChange(sel, field, idx) {
+  if (sel.value === '__add__') {
+    sel.value = getSessions()[idx][field] || '';
+    const box = document.getElementById(`addOptBox_${field}_${idx}`);
+    if (box) {
+      box.classList.remove('hidden');
+      const inp = document.getElementById(`addOptInput_${field}_${idx}`);
+      if (inp) { inp.value = ''; inp.focus(); }
+    }
+    return;
+  }
+  getSessions()[idx][field] = sel.value;
+  if (field==='tarea' || field==='modalidad') updateSessionCardTitle(idx);
+  saveAll();
+}
+
+function toggleEmojiPalette(field, idx) {
+  const pal = document.getElementById(`addOptPalette_${field}_${idx}`);
+  if (pal) pal.classList.toggle('hidden');
+}
+
+function selectOptEmoji(field, idx, emoji) {
+  const iconEl = document.getElementById(`addOptIconVal_${field}_${idx}`);
+  if (iconEl) iconEl.textContent = emoji;
+  const pal = document.getElementById(`addOptPalette_${field}_${idx}`);
+  if (pal) {
+    pal.querySelectorAll('.emoji-chip').forEach(c => c.classList.toggle('selected', c.textContent.trim() === emoji));
+  }
+}
+
+function cancelAddOpt(field, idx) {
+  const box = document.getElementById(`addOptBox_${field}_${idx}`);
+  if (box) box.classList.add('hidden');
+  const selEl = document.querySelector(`[data-field="${field}"][data-idx="${idx}"]`);
+  if (selEl) selEl.value = getSessions()[idx][field] || '';
+}
+
+function confirmAddOpt(field, idx) {
+  const inputEl = document.getElementById(`addOptInput_${field}_${idx}`);
+  const iconEl = document.getElementById(`addOptIconVal_${field}_${idx}`);
+  const selEl = document.querySelector(`[data-field="${field}"][data-idx="${idx}"]`);
+  if (!inputEl || !selEl) return;
+  const text = inputEl.value.trim();
+  if (!text) {
+    showToast('Escribe un nombre para la opción');
+    inputEl.focus();
+    return;
+  }
+  const allowIcon = Boolean(FIELD_EMOJIS[field]);
+  const chosenIcon = (allowIcon && iconEl) ? iconEl.textContent.trim() : '';
+  const startsWithEmoji = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation}|[\u2600-\u27BF\uFE0F])/u.test(text);
+  const finalVal = (chosenIcon && !startsWithEmoji) ? `${chosenIcon} ${text}` : text;
+  addCustomOption(field, finalVal, selEl);
+  getSessions()[idx][field] = finalVal;
+  if (field === 'tarea' || field === 'modalidad') updateSessionCardTitle(idx);
+  saveAll();
+  cancelAddOpt(field, idx);
+  showToast(`Añadido: ${finalVal} ✓`);
+}
+
+// ════════════════════════════════════════════════
+//  PARTICIPANTS (MULTI-SELECT & STATS)
+// ════════════════════════════════════════════════
+function escapeHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function renderParticipantChips(list, idx) {
+  const arr = Array.isArray(list) ? list : [];
+  if (arr.length === 0) {
+    return `<span class="no-participants-hint">Sin participantes asignados</span>`;
+  }
+  return arr.map(p => `
+    <span class="participant-chip">
+      <span class="participant-chip-name">${escapeHtml(p)}</span>
+      <button type="button" class="participant-chip-del" onclick="removeParticipantFromSession(${idx},'${escapeHtml(p).replace(/'/g, "\\'")}')" title="Quitar de esta sesión">✕</button>
+    </span>
+  `).join('');
+}
+
+function buildParticipantsHTML(currentList, idx) {
+  const assigned = Array.isArray(currentList) ? currentList : [];
+  const allOpts = getOptions('participantes');
+  const available = allOpts.filter(p => !assigned.includes(p));
+
+  return `<div class="participants-field-wrap">
+    <div class="participant-chips" id="partChips_${idx}">
+      ${renderParticipantChips(assigned, idx)}
+    </div>
+    <div class="custom-sel-wrap">
+      <select class="field-select participant-select" data-idx="${idx}" onchange="onParticipantSelectChange(this, ${idx})">
+        <option value="">➕ Añadir participante a la sesión...</option>
+        ${available.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}
+        <option value="__add__">✏️ Nuevo participante...</option>
+        ${(state.customOptions.participantes && state.customOptions.participantes.length > 0) ? `<option value="__manage__">⚙️ Gestionar / borrar participante del listado...</option>` : ''}
+      </select>
+      <div class="add-opt-box hidden" id="addOptBox_participantes_${idx}">
+        <div class="add-opt-row">
+          <input class="add-opt-input" type="text" placeholder="Nombre del participante (ej. Guía, Figurante...)" id="addOptInput_participantes_${idx}"
+            onkeydown="if(event.key==='Enter'){confirmAddParticipant(${idx})}">
+          <button class="add-opt-confirm" onclick="confirmAddParticipant(${idx})" title="Guardar">✓</button>
+          <button class="add-opt-cancel" onclick="cancelAddParticipant(${idx})" title="Cancelar">✕</button>
         </div>
       </div>
     </div>
-  </div>
+  </div>`;
+}
 
-  <!-- Modal: Comparativa y Ranking Europa (UE-27) -->
-  <div class="modal-overlay" id="europe-modal">
-    <div class="modal-dialog modal-dialog-lg">
-      <div class="modal-header">
-        <h3>🇪🇺 Precios de Combustibles en Europa (UE-27)</h3>
-        <button class="btn-close-modal" onclick="App.closeModal('europe-modal')">&times;</button>
-      </div>
-      <div class="modal-body" id="europe-modal-content">
-        <!-- Inyectado dinámicamente -->
+function onParticipantSelectChange(sel, idx) {
+  const val = sel.value;
+  if (!val) return;
+  if (val === '__add__') {
+    sel.value = '';
+    const box = document.getElementById(`addOptBox_participantes_${idx}`);
+    if (box) {
+      box.classList.remove('hidden');
+      const inp = document.getElementById(`addOptInput_participantes_${idx}`);
+      if (inp) { inp.value = ''; inp.focus(); }
+    }
+    return;
+  }
+  if (val === '__manage__') {
+    sel.value = '';
+    manageParticipants();
+    return;
+  }
+  addParticipantToSession(idx, val);
+  sel.value = '';
+}
+
+function confirmAddParticipant(idx) {
+  const inp = document.getElementById(`addOptInput_participantes_${idx}`);
+  if (!inp) return;
+  const val = inp.value.trim();
+  if (val) {
+    if (!state.customOptions.participantes) state.customOptions.participantes = [];
+    if (!state.customOptions.participantes.includes(val) && !DEFAULT_PARTICIPANTES.includes(val)) {
+      state.customOptions.participantes.push(val);
+    }
+    addParticipantToSession(idx, val);
+    showToast(`Participante "${val}" añadido ✓`);
+  }
+  cancelAddParticipant(idx);
+}
+
+function cancelAddParticipant(idx) {
+  const box = document.getElementById(`addOptBox_participantes_${idx}`);
+  if (box) box.classList.add('hidden');
+  const selEl = document.querySelector(`select.participant-select[data-idx="${idx}"]`);
+  if (selEl) selEl.value = '';
+}
+
+function addParticipantToSession(idx, name) {
+  const sessions = getSessions();
+  const sess = sessions[idx];
+  if (!sess) return;
+  if (!Array.isArray(sess.participantes)) sess.participantes = [];
+  if (!sess.participantes.includes(name)) {
+    sess.participantes.push(name);
+    saveAll();
+    refreshParticipantUI(idx);
+    renderMonthlySummary();
+  }
+}
+
+function removeParticipantFromSession(idx, name) {
+  const sessions = getSessions();
+  const sess = sessions[idx];
+  if (!sess || !Array.isArray(sess.participantes)) return;
+  sess.participantes = sess.participantes.filter(p => p !== name);
+  saveAll();
+  refreshParticipantUI(idx);
+  renderMonthlySummary();
+}
+
+function refreshParticipantUI(idx) {
+  const sessions = getSessions();
+  const sess = sessions[idx];
+  if (!sess) return;
+  const chipsEl = document.getElementById(`partChips_${idx}`);
+  if (chipsEl) {
+    chipsEl.innerHTML = renderParticipantChips(sess.participantes, idx);
+  }
+  const selEl = document.querySelector(`select.participant-select[data-idx="${idx}"]`);
+  if (selEl) {
+    const assigned = Array.isArray(sess.participantes) ? sess.participantes : [];
+    const available = getOptions('participantes').filter(p => !assigned.includes(p));
+    selEl.innerHTML = `
+      <option value="">➕ Añadir participante a la sesión...</option>
+      ${available.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}
+      <option value="__add__">✏️ Nuevo participante...</option>
+      ${(state.customOptions.participantes && state.customOptions.participantes.length > 0) ? `<option value="__manage__">⚙️ Gestionar / borrar participante del listado...</option>` : ''}
+    `;
+    selEl.value = '';
+  }
+}
+
+function manageParticipants() {
+  const custom = state.customOptions.participantes || [];
+  if (custom.length === 0) {
+    showToast('No hay participantes personalizados en el listado');
+    return;
+  }
+  const toDelete = prompt(`Escribe el nombre del participante que deseas eliminar del listado global:\n\nListado actual:\n${custom.join(', ')}`);
+  if (!toDelete) return;
+  const trimmed = toDelete.trim();
+  if (custom.includes(trimmed)) {
+    state.customOptions.participantes = custom.filter(p => p !== trimmed);
+    saveAll();
+    const sessions = getSessions();
+    sessions.forEach((_, i) => refreshParticipantUI(i));
+    renderMonthlySummary();
+    showToast(`Participante "${trimmed}" eliminado ✓`);
+  } else {
+    showToast(`No se encontró "${trimmed}"`);
+  }
+}
+
+// ════════════════════════════════════════════════
+//  DOG LIST
+// ════════════════════════════════════════════════
+function renderDogList() {
+  const list = document.getElementById('dogList');
+  const mbar = document.getElementById('mobileDogBar');
+  list.innerHTML=''; mbar.innerHTML='';
+  if (state.dogs.length===0) {
+    document.getElementById('onboarding').classList.remove('hidden');
+    document.getElementById('calendarContainer').classList.add('hidden');
+    return;
+  }
+  document.getElementById('onboarding').classList.add('hidden');
+  document.getElementById('calendarContainer').classList.remove('hidden');
+  state.dogs.forEach(dog=>{
+    const active = dog.id===state.currentDogId;
+    const card = document.createElement('div');
+    card.className=`dog-card${active?' active':''}`;
+    const avatarHtml = dog.photo
+      ? `<div class="dog-avatar-wrap"><img src="${dog.photo}" alt=""></div>`
+      : `<div class="dog-avatar-wrap">${dog.avatar||'🐕'}</div>`;
+    card.innerHTML=`${avatarHtml}
+      <div><div class="dog-name">${dog.name}</div><div class="dog-breed">${dog.breed||''}</div></div>
+      <div class="dog-actions"><button class="icon-btn" title="Editar" onclick="event.stopPropagation();openDogModal('${dog.id}')">✏️</button></div>`;
+    card.addEventListener('click',()=>selectDog(dog.id));
+    list.appendChild(card);
+
+    const chip=document.createElement('div');
+    chip.className=`mobile-dog-chip${active?' active':''}`;
+    if (dog.photo) {
+      chip.innerHTML=`<img class="chip-avatar" src="${dog.photo}" alt=""><span>${dog.name}</span><button class="chip-edit" onclick="event.stopPropagation();openDogModal('${dog.id}')">✏️</button>`;
+    } else {
+      chip.innerHTML=`<span class="chip-avatar">${dog.avatar||'🐕'}</span><span>${dog.name}</span><button class="chip-edit" onclick="event.stopPropagation();openDogModal('${dog.id}')">✏️</button>`;
+    }
+    chip.addEventListener('click',()=>selectDog(dog.id));
+    mbar.appendChild(chip);
+  });
+  const addChip=document.createElement('div');
+  addChip.className='mobile-dog-chip';
+  addChip.innerHTML='➕ Perro';
+  addChip.onclick=()=>openDogModal();
+  mbar.appendChild(addChip);
+}
+function selectDog(id){ state.currentDogId=id; saveAll(true); renderDogList(); renderCalendar(); }
+
+// ════════════════════════════════════════════════
+//  CALENDAR
+// ════════════════════════════════════════════════
+function formatDate(date){
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+function getRatingInfo(val){ return RATINGS.find(r=>r.val===val)||{color:'#d1d5db',label:'',textColor:'#fff'}; }
+
+function extractEmojiOrShort(str) {
+  if (!str) return '';
+  const s = String(str).trim();
+  const emojiMatch = s.match(/^(\p{Extended_Pictographic}|\p{Emoji_Presentation}|[\u2600-\u27BF\uFE0F])+/u);
+  if (emojiMatch) return emojiMatch[0];
+  const anyEmoji = s.match(/(\p{Extended_Pictographic}|\p{Emoji_Presentation}|[\u2600-\u27BF\uFE0F])/u);
+  if (anyEmoji) return anyEmoji[0];
+  const lower = s.toLowerCase();
+  if (lower.includes('sol') || lower.includes('despejado')) return '☀️';
+  if (lower.includes('nub')) return '⛅';
+  if (lower.includes('lluv')) return '🌧️';
+  if (lower.includes('torm')) return '🌩️';
+  if (lower.includes('niev')) return '❄️';
+  if (lower.includes('nieb')) return '🌫️';
+  if (lower.includes('calor')) return '🥵';
+  if (lower.includes('frio') || lower.includes('frío')) return '🥶';
+  if (lower.includes('calma')) return '🧘';
+  if (lower.includes('favor')) return '💨';
+  if (lower.includes('contra')) return '🌬️';
+  if (lower.includes('costado') || lower.includes('cruz')) return '↔️';
+  if (lower.includes('remol') || lower.includes('cambi')) return '🌀';
+  if (lower.includes('brisa')) return '🍃';
+  if (lower.includes('rach')) return '🌪️';
+  if (lower.includes('viento')) return '💨';
+  return s.slice(0, 3);
+}
+
+function renderCalendar() {
+  const grid=document.getElementById('calendarGrid');
+  grid.innerHTML='';
+  applyMobileViewModeUI();
+  DAYS_SHORT.forEach(d=>{ const c=document.createElement('div');c.className='cal-header-cell';c.textContent=d;grid.appendChild(c); });
+  if (!state.currentDogId) return;
+  const year=state.currentYear, month=state.currentMonth;
+  const firstDay=new Date(year,month,1), lastDay=new Date(year,month+1,0);
+  let startDow=firstDay.getDay(); startDow=(startDow===0)?6:startDow-1;
+  const totalCells=Math.ceil((startDow+lastDay.getDate())/7)*7;
+  const today=new Date();
+  for(let i=0;i<totalCells;i++){
+    const dayOffset=i-startDow;
+    const date=new Date(year,month,1+dayOffset);
+    const isCurrentMonth=date.getMonth()===month;
+    const isToday=date.toDateString()===today.toDateString();
+    const dateKey=formatDate(date);
+    const sessKey=`${state.currentDogId}_${dateKey}`;
+    const sessions=state.sessions[sessKey]||[];
+    const cell=document.createElement('div');
+    let cls='day-cell';
+    if(!isCurrentMonth) cls+=' other-month';
+    if(isToday) cls+=' today';
+    if(sessions.length>0) cls+=' has-data';
+    cell.className=cls;
+
+    const dowName = DAYS_SHORT[(date.getDay()+6)%7];
+    const numRow=document.createElement('div');
+    numRow.className='day-number';
+    numRow.innerHTML=`<span>${state.mobileAgendaMode ? dowName + ' ' + date.getDate() + ' ' + MONTHS[month].slice(0,3) : date.getDate()}</span>`;
+    if(isCurrentMonth){
+      const addBtn=document.createElement('button');
+      addBtn.className='day-add-btn'; addBtn.innerHTML='+'; addBtn.title='Añadir sesión';
+      addBtn.onclick=(e)=>{e.stopPropagation();openDayModal(dateKey);};
+      numRow.appendChild(addBtn);
+    }
+    cell.appendChild(numRow);
+
+    const MAX_VISIBLE = state.mobileAgendaMode ? 15 : 8;
+    sessions.slice(0,MAX_VISIBLE).forEach(s=>{
+      const ri=getRatingInfo(s.rating);
+      const mini=document.createElement('div');
+      mini.className='sess-mini';
+      const hasFiles=s.files&&s.files.length>0;
+
+      const tIcon = extractEmojiOrShort(s.tiempo);
+      const vIcon = extractEmojiOrShort(s.viento);
+      const hasWeather = Boolean(tIcon || vIcon);
+
+      const ratingBg = ri.color || '#64748b';
+      const ratingText = ri.textColor || '#fff';
+      const tooltipTitle = `${s.tarea||'Sesión'}${ri.label?' · Valoración: '+ri.label:''}${s.duracion?' ('+s.duracion+')':''}`;
+
+      let rows='';
+      // 1) Cabecera de la TAREA: Fondo pintado con el color de la valoración
+      rows+=`<div class="sess-tarea-badge" style="background:${ratingBg};color:${ratingText}" title="${tooltipTitle}">
+        <span class="sess-tarea-title">${s.tarea||'Sesión'}</span>
+        ${hasFiles?`<span class="sess-has-file" title="${s.files.length} archivo(s)">📎${s.files.length}</span>`:''}
+      </div>`;
+
+      // 2) Cuerpo de la sesión: Modalidad, iconos de tiempo y viento, y lugar
+      rows+=`<div class="sess-mini-body">`;
+      if(s.modalidad){
+        rows+=`<div class="sess-modalidad" title="Modalidad: ${s.modalidad}">🏷️ ${s.modalidad}</div>`;
+      }
+      if(hasWeather || s.lugar){
+        rows+=`<div class="sess-meta-row">
+          ${hasWeather?`<span class="sess-weather-icons" title="Tiempo: ${s.tiempo||'—'} · Viento: ${s.viento||'—'}">${tIcon?`<span>${tIcon}</span>`:''}${vIcon?`<span style="margin-left:2px">${vIcon}</span>`:''}</span>`:''}
+          ${s.lugar?`<span class="sess-lugar-mini" title="Lugar: ${s.lugar}">📍 ${s.lugar}</span>`:''}
+        </div>`;
+      }
+      if(s.participantes && s.participantes.length > 0){
+        rows+=`<div class="sess-participantes-mini extra-detail" title="Participantes: ${escapeHtml(s.participantes.join(', '))}">👥 ${escapeHtml(s.participantes.join(', '))}</div>`;
+      }
+      if(s.notas){
+        rows+=`<div class="sess-notas-mini extra-detail" title="Notas: ${s.notas}">📝 ${s.notas}</div>`;
+      }
+      rows+=`</div>`;
+
+      mini.innerHTML=rows;
+      cell.appendChild(mini);
+    });
+    if(sessions.length>MAX_VISIBLE){
+      const more=document.createElement('div');
+      more.className='sess-more';
+      more.textContent=`+${sessions.length-MAX_VISIBLE} más`;
+      cell.appendChild(more);
+    }
+
+    if(isCurrentMonth){ cell.addEventListener('click',()=>openDayModal(dateKey)); cell.style.cursor='pointer'; }
+    grid.appendChild(cell);
+  }
+  renderPrintHeader();
+  renderMonthlySummary();
+  setTimeout(syncCalendarScrollbars, 30);
+}
+
+function syncCalendarScrollbars() {
+  const wrap = document.getElementById('calendarScrollWrap');
+  if (!wrap || wrap.dataset.scrollBound) return;
+  wrap.dataset.scrollBound = '1';
+  wrap.addEventListener('wheel', (e) => {
+    if (e.shiftKey) {
+      wrap.scrollLeft += e.deltaY;
+    }
+  }, { passive: true });
+}
+
+// ════════════════════════════════════════════════
+//  MONTHLY SUMMARY & DURATION PARSER
+// ════════════════════════════════════════════════
+function parseDurationToMinutes(str) {
+  if (!str) return 0;
+  const s = str.toLowerCase().trim();
+  if (s.includes('más de 3') || s.includes('mas de 3')) return 210;
+  let total = 0;
+  const hMatch = s.match(/(\d+(?:[.,]\d+)?)\s*h/);
+  const mMatch = s.match(/(\d+)\s*m/);
+  if (hMatch) total += Math.round(parseFloat(hMatch[1].replace(',','.')) * 60);
+  if (mMatch) total += parseInt(mMatch[1], 10);
+  if (!hMatch && !mMatch) {
+    const num = parseFloat(s.replace(',','.'));
+    if (!isNaN(num)) total = num <= 10 ? Math.round(num * 60) : Math.round(num);
+  }
+  return total;
+}
+
+function formatMinutes(mins) {
+  if (!mins || mins <= 0) return '0 min';
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h > 0 && m > 0) return `${h} h ${m} min`;
+  if (h > 0) return `${h} h`;
+  return `${m} min`;
+}
+
+function getMonthImprovementKey() {
+  return `${state.currentDogId}_${getMonthColorKey()}`;
+}
+
+function onManualImprovementChange(val) {
+  state.monthlyImprovements[getMonthImprovementKey()] = val;
+  const wrap = document.getElementById('manualImproveWrap');
+  if (wrap) wrap.classList.toggle('no-print', !val.trim());
+  saveAll();
+}
+
+function isLibreModalidad(mod) {
+  if (!mod) return false;
+  return mod.toLowerCase().includes('libre');
+}
+
+function computeMonthlyStats() {
+  const year = state.currentYear, month = state.currentMonth;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const byTarea = {};
+  const byModalidad = {};
+  let totalMinutes = 0;
+  let totalSessions = 0;
+  let totalEligibleSessions = 0; // sesiones totales en todas las modalidades menos en los libres
+  const participantCounts = {};  // participante -> asistencias en modalidades elegibles (no libres)
+  const monthParticipantSet = new Set();
+  const improvementItems = [];
+  const allNotes = [];
+
+  const IMPROVE_KEYWORDS = ['mejorar','fallo','falla','error','falta','trabajar','corregir','duda','distrac','viento','marcaje','ladrido','obediencia','lento','cuesta','problema','repasar','pendiente','ojo','atención','atencion','insegur','nervios','foco','concentr','cansad','difícil','dificil','reforzar','repetir'];
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const sessKey = `${state.currentDogId}_${dateKey}`;
+    const sessions = state.sessions[sessKey] || [];
+    sessions.forEach((s) => {
+      totalSessions++;
+      const mins = parseDurationToMinutes(s.duracion);
+      totalMinutes += mins;
+
+      const isLibre = isLibreModalidad(s.modalidad);
+      if (!isLibre) {
+        totalEligibleSessions++;
+      }
+
+      const pList = Array.isArray(s.participantes) ? s.participantes : [];
+      pList.forEach(p => {
+        if (!p) return;
+        monthParticipantSet.add(p);
+        if (!isLibre) {
+          participantCounts[p] = (participantCounts[p] || 0) + 1;
+        }
+      });
+
+      const tKey = s.tarea || 'Sin especificar';
+      if (!byTarea[tKey]) byTarea[tKey] = { count: 0, mins: 0 };
+      byTarea[tKey].count++;
+      byTarea[tKey].mins += mins;
+
+      const mKey = s.modalidad || 'Sin especificar';
+      if (!byModalidad[mKey]) byModalidad[mKey] = { count: 0, mins: 0 };
+      byModalidad[mKey].count++;
+      byModalidad[mKey].mins += mins;
+
+      const noteText = (s.notas || '').trim();
+      const isLowRating = ['regular', 'mal', 'muy-mal'].includes(s.rating);
+      const hasKeyword = noteText && IMPROVE_KEYWORDS.some(kw => noteText.toLowerCase().includes(kw));
+
+      const itemObj = {
+        day: d,
+        dateStr: `${String(d).padStart(2,'0')}/${String(month+1).padStart(2,'0')}`,
+        tarea: s.tarea || 'Sesión',
+        modalidad: s.modalidad || '',
+        rating: s.rating || '',
+        notas: noteText,
+        isLowRating,
+        hasKeyword
+      };
+
+      if (isLowRating || hasKeyword) {
+        improvementItems.push(itemObj);
+      } else if (noteText) {
+        allNotes.push(itemObj);
+      }
+    });
+  }
+
+  const tareaList = Object.entries(byTarea)
+    .map(([name, v]) => ({ name, count: v.count, mins: v.mins, pct: totalMinutes > 0 ? Math.round((v.mins / totalMinutes) * 100) : 0 }))
+    .sort((a, b) => b.mins - a.mins || b.count - a.count);
+
+  const modalidadList = Object.entries(byModalidad)
+    .map(([name, v]) => ({ name, count: v.count, mins: v.mins, pct: totalMinutes > 0 ? Math.round((v.mins / totalMinutes) * 100) : 0 }))
+    .sort((a, b) => b.mins - a.mins || b.count - a.count);
+
+  const allKnownParticipants = [...new Set([...(state.customOptions.participantes || []), ...Array.from(monthParticipantSet)])];
+  const participantList = allKnownParticipants.map(name => {
+    const attended = participantCounts[name] || 0;
+    const total = totalEligibleSessions;
+    const pct = total > 0 ? Math.round((attended / total) * 100) : 0;
+    return {
+      name,
+      attended,
+      total,
+      fraction: `${attended}/${total}`,
+      pct
+    };
+  }).sort((a, b) => b.attended - a.attended || b.pct - a.pct || a.name.localeCompare(b.name));
+
+  return {
+    totalMinutes,
+    totalSessions,
+    totalEligibleSessions,
+    participantList,
+    tareaList,
+    modalidadList,
+    improvementItems,
+    allNotes,
+    manualNote: state.monthlyImprovements[getMonthImprovementKey()] || ''
+  };
+}
+
+function renderPrintHeader() {
+  const el = document.getElementById('printHeader');
+  if (!el || !state.currentDogId) return;
+  const dog = state.dogs.find(d => d.id === state.currentDogId);
+  if (!dog) return;
+  const avatarHtml = dog.photo
+    ? `<div class="print-dog-avatar"><img src="${dog.photo}" alt=""></div>`
+    : `<div class="print-dog-avatar">${dog.avatar || '🐕'}</div>`;
+  el.innerHTML = `
+    <div class="print-dog-info">
+      ${avatarHtml}
+      <div>
+        <div class="print-dog-title">${dog.name}</div>
+        <div class="print-dog-sub">${dog.breed ? dog.breed + ' · ' : ''}${dog.birth ? 'Nac: ' + dog.birth + ' · ' : ''}Diario K9 de Búsqueda y Rescate</div>
       </div>
     </div>
-  </div>
+    <div class="print-month-badge">${MONTHS[state.currentMonth]} ${state.currentYear}</div>
+  `;
+}
 
-  <!-- Overlay de Carga -->
-  <div class="loading-overlay" id="loading-overlay">
-    <div class="loader-spinner"></div>
-    <span style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 600; color: #fff;">Consultando Ministerio (MITECO)...</span>
-  </div>
+function buildSummaryHTML(stats, isPrintWindow = false) {
+  const tareaRows = stats.tareaList.length > 0
+    ? stats.tareaList.map(t => `
+      <tr>
+        <td>
+          <div style="font-weight:600">${t.name}</div>
+          <div class="summary-bar-wrap"><div class="summary-bar-fill" style="width:${t.pct}%"></div></div>
+        </td>
+        <td style="text-align:center">${t.count}</td>
+        <td style="text-align:right;font-weight:700">${formatMinutes(t.mins)}</td>
+        <td style="text-align:right;color:var(--text-muted)">${t.pct}%</td>
+      </tr>`).join('') + `
+      <tr class="total-row">
+        <td>Total Tareas</td>
+        <td style="text-align:center">${stats.totalSessions}</td>
+        <td style="text-align:right">${formatMinutes(stats.totalMinutes)}</td>
+        <td style="text-align:right">100%</td>
+      </tr>`
+    : `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:12px">Sin registros este mes</td></tr>`;
 
-  <!-- Scripts -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/provinces.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/favorites.js"></script>
-  <script src="js/calculator.js"></script>
-  <script src="js/map.js"></script>
-  <script src="js/app.js"></script>
+  const modalidadRows = stats.modalidadList.length > 0
+    ? stats.modalidadList.map(m => `
+      <tr>
+        <td>
+          <div style="font-weight:600">${m.name}</div>
+          <div class="summary-bar-wrap"><div class="summary-bar-fill" style="width:${m.pct}%"></div></div>
+        </td>
+        <td style="text-align:center">${m.count}</td>
+        <td style="text-align:right;font-weight:700">${formatMinutes(m.mins)}</td>
+        <td style="text-align:right;color:var(--text-muted)">${m.pct}%</td>
+      </tr>`).join('') + `
+      <tr class="total-row">
+        <td>Total Modalidades</td>
+        <td style="text-align:center">${stats.totalSessions}</td>
+        <td style="text-align:right">${formatMinutes(stats.totalMinutes)}</td>
+        <td style="text-align:right">100%</td>
+      </tr>`
+    : `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:12px">Sin registros este mes</td></tr>`;
+
+  const participantRows = (stats.participantList && stats.participantList.length > 0)
+    ? stats.participantList.map(p => `
+      <tr>
+        <td>
+          <div style="font-weight:600">👤 ${escapeHtml(p.name)}</div>
+          <div class="summary-bar-wrap"><div class="summary-bar-fill" style="width:${p.pct}%"></div></div>
+        </td>
+        <td style="text-align:center;font-weight:600">${p.attended}</td>
+        <td style="text-align:center;font-weight:800;color:var(--primary);font-size:.92rem">${p.fraction}</td>
+        <td style="text-align:right;font-weight:700">${p.pct}%</td>
+      </tr>`).join('') + `
+      <tr class="total-row">
+        <td>Total Sesiones Computables (no libres)</td>
+        <td style="text-align:center">${stats.totalEligibleSessions}</td>
+        <td style="text-align:center">${stats.totalEligibleSessions}/${stats.totalEligibleSessions}</td>
+        <td style="text-align:right">100%</td>
+      </tr>`
+    : `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:14px">Sin participantes registrados este mes</td></tr>`;
+
+  const itemsToShow = stats.improvementItems.length > 0 ? stats.improvementItems : stats.allNotes;
+  let improveListHTML = '';
+  if (itemsToShow.length > 0) {
+    improveListHTML = `<div class="improve-list">` + itemsToShow.map(item => {
+      const ri = getRatingInfo(item.rating);
+      const cls = ['mal','muy-mal'].includes(item.rating) ? 'bad' : (item.rating === 'regular' || item.hasKeyword ? '' : 'note');
+      return `<div class="improve-item ${cls}">
+        <div class="improve-item-meta">
+          <span>📅 Día ${item.dateStr}</span>
+          <span>· 📋 ${item.tarea}</span>
+          ${item.modalidad ? `<span>· 🏷️ ${item.modalidad}</span>` : ''}
+          ${ri.label ? `<span class="rating-pill-mini" style="background:${ri.color};color:${ri.textColor}">${ri.label}</span>` : ''}
+        </div>
+        <div class="improve-item-text">${item.notas || 'Sesión valorada como "' + ri.label + '" (revisar rendimiento en esta tarea).'}</div>
+      </div>`;
+    }).join('') + `</div>`;
+  } else {
+    improveListHTML = `<div style="font-size:.82rem;color:var(--text-muted);font-style:italic">No se han detectado incidencias ni notas de mejora en las sesiones de este mes.</div>`;
+  }
+
+  const manualSection = isPrintWindow
+    ? (stats.manualNote ? `<div style="margin-top:8px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;background:#f8faf9;font-size:.82rem"><strong>📌 Conclusiones / Plan de mejora del mes:</strong><div style="margin-top:4px;white-space:pre-wrap">${stats.manualNote}</div></div>` : '')
+    : `<div class="improve-manual-box ${stats.manualNote ? '' : 'no-print'}" id="manualImproveWrap">
+        <label>📌 Conclusiones adicionales / Plan de mejora del mes (se incluye al imprimir):</label>
+        <textarea class="improve-manual-textarea" placeholder="Escribe aquí el resumen general o puntos clave a reforzar el próximo mes..." oninput="onManualImprovementChange(this.value)">${stats.manualNote}</textarea>
+      </div>`;
+
+  return `
+    <div class="summary-header-bar">
+      <h3>📊 Resumen Mensual — ${MONTHS[state.currentMonth]} ${state.currentYear}</h3>
+      <div class="summary-kpi-row">
+        <span>🐾 ${stats.totalSessions} sesiones</span>
+        <span>🏷️ ${stats.totalEligibleSessions} no libres</span>
+        <span>⏱️ Tiempo total: ${formatMinutes(stats.totalMinutes)}</span>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-card-title"><span>📋 Tiempo por TAREA</span><span>${formatMinutes(stats.totalMinutes)}</span></div>
+        <table class="summary-table">
+          <thead><tr><th>Tarea</th><th style="text-align:center">Ses.</th><th style="text-align:right">Tiempo</th><th style="text-align:right">%</th></tr></thead>
+          <tbody>${tareaRows}</tbody>
+        </table>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-title"><span>🏷️ Tiempo por MODALIDAD</span><span>${formatMinutes(stats.totalMinutes)}</span></div>
+        <table class="summary-table">
+          <thead><tr><th>Modalidad</th><th style="text-align:center">Ses.</th><th style="text-align:right">Tiempo</th><th style="text-align:right">%</th></tr></thead>
+          <tbody>${modalidadRows}</tbody>
+        </table>
+      </div>
+      <div class="summary-card full-width">
+        <div class="summary-card-title">
+          <span>👥 Asistencia de PARTICIPANTES (todas las modalidades excepto libres)</span>
+          <span>${stats.totalEligibleSessions} sesión${stats.totalEligibleSessions===1?'':'es'} computable${stats.totalEligibleSessions===1?'':'s'}</span>
+        </div>
+        <table class="summary-table">
+          <thead><tr><th>Participante</th><th style="text-align:center">Ses. Asistidas</th><th style="text-align:center">Fracción Asistencia</th><th style="text-align:right">% Asistencia</th></tr></thead>
+          <tbody>${participantRows}</tbody>
+        </table>
+        <div style="font-size:.73rem;color:var(--text-muted);font-style:italic;margin-top:2px">
+          ℹ️ La fracción indica las sesiones a las que asistió cada participante sobre el total realizadas en el mes excluyendo los Entrenamientos libres (${stats.totalEligibleSessions} sesiones).
+        </div>
+      </div>
+      <div class="summary-card full-width">
+        <div class="summary-card-title">
+          <span>🎯 Aspectos a mejorar y observaciones (según notas y valoraciones del mes)</span>
+          <span>${itemsToShow.length} apunte${itemsToShow.length===1?'':'s'}</span>
+        </div>
+        ${improveListHTML}
+        ${manualSection}
+      </div>
+    </div>
+  `;
+}
+
+function renderMonthlySummary() {
+  const container = document.getElementById('monthlySummaryContainer');
+  if (!container) return;
+  if (!state.currentDogId) { container.innerHTML = ''; return; }
+  const stats = computeMonthlyStats();
+  container.innerHTML = buildSummaryHTML(stats, false);
+}
+
+// ════════════════════════════════════════════════
+//  DAY MODAL
+// ════════════════════════════════════════════════
+function openDayModal(dateKey) {
+  if(!state.currentDogId){showToast('Selecciona un perro primero');return;}
+  state.currentDayKey=dateKey;
+  const dog=state.dogs.find(d=>d.id===state.currentDogId);
+  const [y,m,d]=dateKey.split('-');
+  const dateObj=new Date(parseInt(y),parseInt(m)-1,parseInt(d));
+  const dayName=dateObj.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('dayModalTitle').textContent=dayName.charAt(0).toUpperCase()+dayName.slice(1);
+  document.getElementById('dayModalDog').textContent=`${dog?.photo?'':dog?.avatar||'🐕'} ${dog?.name||''}`;
+  renderDaySessions();
+  document.getElementById('dayModalOverlay').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+function closeDayModal(e) {
+  if(e&&e.target!==document.getElementById('dayModalOverlay'))return;
+  document.getElementById('dayModalOverlay').classList.add('hidden');
+  document.body.style.overflow='';
+  saveAll(); renderCalendar();
+}
+function getSessKey(){ return `${state.currentDogId}_${state.currentDayKey}`; }
+function getSessions(){ const k=getSessKey(); if(!state.sessions[k])state.sessions[k]=[]; return state.sessions[k]; }
+
+function renderDaySessions() {
+  const body=document.getElementById('dayModalBody');
+  body.innerHTML='';
+  const sessions=getSessions();
+  if(sessions.length===0){
+    body.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:20px">No hay sesiones. Añade la primera.</div>';
+    updateToggleAllBtn();
+    return;
+  }
+  sessions.forEach((sess,idx)=>{ body.appendChild(buildSessionCard(sess,idx)); });
+  updateToggleAllBtn();
+}
+
+function buildSessionCard(sess,idx) {
+  const card=document.createElement('div');
+  card.className='session-card'; card.dataset.idx=idx;
+  if(!Array.isArray(sess.participantes)) sess.participantes = [];
+  const ri=getRatingInfo(sess.rating);
+  const modBadge = sess.modalidad ? `<span style="background:#e8f5ed;color:var(--primary);padding:1px 6px;border-radius:4px;font-size:.7rem;margin-left:5px">${sess.modalidad}</span>` : '';
+  card.innerHTML=`
+    <div class="session-card-header" onclick="toggleSession(${idx})">
+      <div class="session-num">${idx+1}</div>
+      <div class="session-card-title" id="scTitle_${idx}">${sess.tarea||'Sesión '+(idx+1)} ${modBadge} ${ri.label?`<span style="color:${ri.color};margin-left:5px;font-size:.72rem">● ${ri.label}</span>`:''}</div>
+      <button class="session-expand-btn" id="expandBtn_${idx}" onclick="event.stopPropagation();toggleSessionFullHeight(${idx})" title="Alternar entre ver con barra o desplegado completo">↕ Barra</button>
+      <div class="session-toggle" id="toggle-${idx}">▼</div>
+      <button class="session-del-btn" onclick="event.stopPropagation();deleteSession(${idx})" title="Eliminar sesión">🗑️</button>
+    </div>
+    <div class="session-fields" id="fields-${idx}">
+      <div class="field-row"><div class="field-label">Tarea</div>${buildSelectHTML('tarea',sess.tarea,idx)}</div>
+      <div class="field-row"><div class="field-label">Modalidad</div>${buildSelectHTML('modalidad',sess.modalidad,idx)}</div>
+      <div class="field-row"><div class="field-label">Participantes</div>${buildParticipantsHTML(sess.participantes,idx)}</div>
+      <div class="field-row"><div class="field-label">Duración</div>${buildSelectHTML('duracion',sess.duracion,idx)}</div>
+      <div class="field-row"><div class="field-label">Lugar</div>${buildSelectHTML('lugar',sess.lugar,idx)}</div>
+      <div class="field-row"><div class="field-label">Tiempo</div>${buildSelectHTML('tiempo',sess.tiempo,idx)}</div>
+      <div class="field-row"><div class="field-label">Viento</div>${buildSelectHTML('viento',sess.viento,idx)}</div>
+      <div class="field-row">
+        <div class="field-label">Valoración</div>
+        <div class="rating-row">
+          ${RATINGS.map(r=>`<div class="rating-opt${sess.rating===r.val?' selected':''}" data-val="${r.val}" data-idx="${idx}" onclick="setRating(${idx},'${r.val}')">${r.label}</div>`).join('')}
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Notas</div>
+        <textarea class="field-textarea" data-field="notas" data-idx="${idx}"
+          placeholder="Observaciones de la sesión..."
+          oninput="autoResize(this);getSessions()[${idx}].notas=this.value">${sess.notas||''}</textarea>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Archivos</div>
+        <div class="file-section" id="fileSec_${idx}">
+          <div class="file-drop-area" onclick="triggerFileUpload(${idx})"
+               ondragover="event.preventDefault()" ondrop="onFileDrop(event,${idx})">
+            📎 Pulsa o arrastra fotos / archivos KML, KMZ…
+          </div>
+          <input type="file" id="fileInput_${idx}" style="display:none"
+            accept="image/*,.kml,.kmz,.gpx,.pdf"
+            multiple onchange="onFileChange(event,${idx})">
+          <div class="file-grid" id="fileGrid_${idx}"></div>
+        </div>
+      </div>
+    </div>`;
+  setTimeout(()=>{
+    renderFileGrid(idx);
+    const ta=card.querySelector('.field-textarea');
+    if(ta) autoResize(ta);
+  },0);
+  return card;
+}
+
+function toggleSession(idx){
+  const f=document.getElementById(`fields-${idx}`), t=document.getElementById(`toggle-${idx}`);
+  if(!f || !t) return;
+  if(f.classList.contains('collapsed')){f.classList.remove('collapsed');t.textContent='▼';}
+  else{f.classList.add('collapsed');t.textContent='▶';}
+  updateToggleAllBtn();
+}
+
+function toggleSessionFullHeight(idx){
+  const f=document.getElementById(`fields-${idx}`);
+  const btn=document.getElementById(`expandBtn_${idx}`);
+  if(!f) return;
+  const isFull=f.classList.toggle('full-height');
+  if(btn) btn.textContent=isFull?'↕ Completo':'↕ Barra';
+}
+
+function toggleAllSessions(){
+  const sessions=getSessions();
+  const someCollapsed=sessions.some((_,i)=>document.getElementById(`fields-${i}`)?.classList.contains('collapsed'));
+  sessions.forEach((_,i)=>{
+    const f=document.getElementById(`fields-${i}`), t=document.getElementById(`toggle-${i}`);
+    if(f && t){
+      if(someCollapsed){ f.classList.remove('collapsed'); t.textContent='▼'; }
+      else { f.classList.add('collapsed'); t.textContent='▶'; }
+    }
+  });
+  updateToggleAllBtn();
+}
+
+function updateToggleAllBtn(){
+  const btn=document.getElementById('toggleAllSessionsBtn');
+  if(!btn) return;
+  const sessions=getSessions();
+  if(sessions.length <= 1){
+    btn.style.display='none';
+    return;
+  }
+  btn.style.display='inline-block';
+  const someCollapsed=sessions.some((_,i)=>document.getElementById(`fields-${i}`)?.classList.contains('collapsed'));
+  btn.textContent=someCollapsed ? '⇕ Desplegar todas' : '⇕ Plegar todas';
+}
+function updateSessionCardTitle(idx){
+  const sess=getSessions()[idx];
+  const ri=getRatingInfo(sess.rating);
+  const modBadge = sess.modalidad ? `<span style="background:#e8f5ed;color:var(--primary);padding:1px 6px;border-radius:4px;font-size:.7rem;margin-left:5px">${sess.modalidad}</span>` : '';
+  const el=document.getElementById(`scTitle_${idx}`);
+  if(el) el.innerHTML=`${sess.tarea||'Sesión '+(idx+1)} ${modBadge} ${ri.label?`<span style="color:${ri.color};margin-left:5px;font-size:.72rem">● ${ri.label}</span>`:''}`;
+}
+function setRating(idx,val){
+  getSessions()[idx].rating=val;
+  document.querySelectorAll(`[data-idx="${idx}"].rating-opt`).forEach(el=>el.classList.toggle('selected',el.dataset.val===val));
+  updateSessionCardTitle(idx);
+  saveAll();
+}
+function autoResize(el){
+  if(!el) return;
+  el.style.height='auto';
+  const newH = Math.min(Math.max(el.scrollHeight, 75), 240);
+  el.style.height=newH+'px';
+}
+function addSession(){
+  const s=getSessions();
+  s.push({tarea:'',modalidad:'',duracion:'',lugar:'',tiempo:'',viento:'',rating:'',notas:'',files:[],participantes:[]});
+  renderDaySessions();
+  saveAll();
+  setTimeout(()=>{
+    const b=document.getElementById('dayModalBody');
+    if(b){
+      b.scrollTo({top:b.scrollHeight,behavior:'smooth'});
+      const cards=b.querySelectorAll('.session-card');
+      const newCard=cards[cards.length-1];
+      if(newCard){
+        newCard.scrollIntoView({behavior:'smooth',block:'end'});
+        newCard.style.transition='box-shadow 0.35s ease, border-color 0.35s ease';
+        newCard.style.borderColor='var(--primary)';
+        newCard.style.boxShadow='0 0 0 3px rgba(26, 92, 56, 0.35)';
+        setTimeout(()=>{
+          newCard.style.borderColor='';
+          newCard.style.boxShadow='';
+        },1600);
+      }
+    }
+  },100);
+}
+function deleteSession(idx){
+  if(!confirm('¿Eliminar esta sesión?'))return;
+  const s=getSessions(); s.splice(idx,1);
+  if(s.length===0) delete state.sessions[getSessKey()];
+  renderDaySessions(); saveAll();
+}
+
+// ════════════════════════════════════════════════
+//  FILE UPLOAD
+// ════════════════════════════════════════════════
+function triggerFileUpload(idx){ document.getElementById(`fileInput_${idx}`).click(); }
+function onFileDrop(e,idx){ e.preventDefault(); handleFiles(e.dataTransfer.files,idx); }
+function onFileChange(e,idx){ handleFiles(e.target.files,idx); e.target.value=''; }
+
+function handleFiles(fileList, idx) {
+  const sess=getSessions()[idx];
+  if(!sess.files) sess.files=[];
+  Array.from(fileList).forEach(file=>{
+    if(file.size>8*1024*1024){showToast(`${file.name}: máx. 8MB`);return;}
+    const reader=new FileReader();
+    reader.onload=e=>{
+      sess.files.push({name:file.name,type:file.type,data:e.target.result});
+      renderFileGrid(idx);
+      saveAll();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderFileGrid(idx){
+  const grid=document.getElementById(`fileGrid_${idx}`);
+  if(!grid)return;
+  const sess=getSessions()[idx];
+  if(!sess||!sess.files||sess.files.length===0){grid.innerHTML='';return;}
+  grid.innerHTML='';
+  sess.files.forEach((f,fi)=>{
+    const thumb=document.createElement('div');
+    thumb.className='file-thumb';
+    const isImg=f.type&&f.type.startsWith('image/');
+    if(isImg){
+      thumb.innerHTML=`<img src="${f.data}" alt="${f.name}" onclick="openLightbox('${f.data}')">
+        <button class="file-del-btn" onclick="event.stopPropagation();deleteFile(${idx},${fi})">✕</button>`;
+    } else {
+      const icon=f.name.endsWith('.kml')||f.name.endsWith('.kmz')?'🗺️':f.name.endsWith('.gpx')?'📡':'📎';
+      thumb.innerHTML=`<div class="file-thumb-icon">${icon}</div>
+        <div class="file-thumb-name">${f.name}</div>
+        <button class="file-del-btn" onclick="event.stopPropagation();deleteFile(${idx},${fi})">✕</button>`;
+      thumb.onclick=()=>downloadFile(f);
+    }
+    grid.appendChild(thumb);
+  });
+}
+function deleteFile(idx,fi){
+  getSessions()[idx].files.splice(fi,1);
+  renderFileGrid(idx); saveAll();
+}
+function downloadFile(f){
+  const a=document.createElement('a');
+  a.href=f.data; a.download=f.name; a.click();
+}
+
+// ════════════════════════════════════════════════
+//  LIGHTBOX
+// ════════════════════════════════════════════════
+function openLightbox(src){
+  document.getElementById('lightboxImg').src=src;
+  document.getElementById('lightbox').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.add('hidden');
+  document.body.style.overflow='';
+}
+
+// ════════════════════════════════════════════════
+//  DOG MODAL
+// ════════════════════════════════════════════════
+let selectedAvatar='🐕', pendingDogPhoto=null;
+
+function openDogModal(dogId){
+  state.editDogId=dogId||null;
+  const dog=dogId?state.dogs.find(d=>d.id===dogId):null;
+  document.getElementById('dogModalTitle').textContent=dog?'Editar Perro':'Añadir Perro';
+  document.getElementById('dogName').value=dog?.name||'';
+  document.getElementById('dogBreed').value=dog?.breed||'';
+  document.getElementById('dogBirth').value=dog?.birth||'';
+  document.getElementById('dogNotes').value=dog?.notes||'';
+  selectedAvatar=dog?.avatar||'🐕';
+  pendingDogPhoto=dog?.photo||null;
+  updateDogPhotoPreview();
+  document.querySelectorAll('.avatar-opt').forEach(el=>el.classList.toggle('selected',el.dataset.av===selectedAvatar));
+  document.getElementById('deleteDogBtn').classList.toggle('hidden',!dog);
+  document.getElementById('dogModalOverlay').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+function closeDogModal(e){
+  if(e&&e.target!==document.getElementById('dogModalOverlay'))return;
+  document.getElementById('dogModalOverlay').classList.add('hidden');
+  document.body.style.overflow='';
+}
+function updateDogPhotoPreview(){
+  const prev=document.getElementById('dogPhotoPreview');
+  const removeBtn=document.getElementById('dogPhotoRemoveBtn');
+  if(pendingDogPhoto){
+    prev.innerHTML=`<img src="${pendingDogPhoto}" alt="">`;
+    removeBtn.style.display='';
+  } else {
+    prev.innerHTML=selectedAvatar;
+    removeBtn.style.display='none';
+  }
+}
+function onDogPhotoChange(e){
+  const file=e.target.files[0]; if(!file)return;
+  if(file.size>5*1024*1024){showToast('Máximo 5MB para la foto del perro');return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      const max=400;
+      let w=img.width,h=img.height;
+      if(w>h){if(w>max){h=Math.round(h*max/w);w=max;}}else{if(h>max){w=Math.round(w*max/h);h=max;}}
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      pendingDogPhoto=canvas.toDataURL('image/jpeg',0.82);
+      updateDogPhotoPreview();
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+function removeDogPhoto(){ pendingDogPhoto=null; updateDogPhotoPreview(); }
+
+function saveDog(){
+  const name=document.getElementById('dogName').value.trim();
+  if(!name){showToast('El nombre es obligatorio');return;}
+  if(state.editDogId){
+    const dog=state.dogs.find(d=>d.id===state.editDogId);
+    dog.name=name; dog.breed=document.getElementById('dogBreed').value.trim();
+    dog.birth=document.getElementById('dogBirth').value;
+    dog.notes=document.getElementById('dogNotes').value.trim();
+    dog.avatar=selectedAvatar; dog.photo=pendingDogPhoto;
+  } else {
+    const id='dog_'+Date.now();
+    state.dogs.push({id,name,breed:document.getElementById('dogBreed').value.trim(),
+      birth:document.getElementById('dogBirth').value,
+      notes:document.getElementById('dogNotes').value.trim(),
+      avatar:selectedAvatar,photo:pendingDogPhoto});
+    state.currentDogId=id;
+  }
+  saveAll(); closeDogModal(); renderDogList(); renderCalendar();
+  showToast('Perro guardado y sincronizado ✓');
+}
+function deleteDog(){
+  if(!state.editDogId)return;
+  const dog=state.dogs.find(d=>d.id===state.editDogId);
+  if(!confirm(`¿Eliminar a ${dog?.name}? Se borrarán todos sus datos.`))return;
+  Object.keys(state.sessions).forEach(k=>{if(k.startsWith(state.editDogId+'_'))delete state.sessions[k];});
+  state.dogs=state.dogs.filter(d=>d.id!==state.editDogId);
+  if(state.currentDogId===state.editDogId) state.currentDogId=state.dogs[0]?.id||null;
+  saveAll(); closeDogModal(); renderDogList(); renderCalendar();
+  showToast('Perro eliminado');
+}
+document.getElementById('avatarSelector').addEventListener('click',e=>{
+  const opt=e.target.closest('.avatar-opt'); if(!opt)return;
+  selectedAvatar=opt.dataset.av;
+  document.querySelectorAll('.avatar-opt').forEach(el=>el.classList.remove('selected'));
+  opt.classList.add('selected');
+  if(!pendingDogPhoto) updateDogPhotoPreview();
+});
+
+// ════════════════════════════════════════════════
+//  SYNC MODAL & LAN QR
+// ════════════════════════════════════════════════
+async function openSyncModal(){
+  document.getElementById('syncCodeBox').classList.add('hidden');
+  document.getElementById('copySyncBtn').style.display='none';
+  document.getElementById('syncPasteArea').value='';
+  document.getElementById('importFileStatus').textContent='';
+  document.getElementById('syncRoomInput').value = syncRoom;
+  updateInstallStatusBanner();
+  updateInstallButtonUI();
+  document.getElementById('syncModalOverlay').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+
+  const lanBox = document.getElementById('lanUrlBox');
+  const qrBox = document.getElementById('qrContainer');
+  try {
+    if (location.protocol !== 'file:') {
+      const res = await fetch('/api/info');
+      if (res.ok) {
+        const info = await res.json();
+        lanBox.textContent = info.url;
+        qrBox.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(info.url)}" alt="QR" style="border-radius:8px;border:4px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.12)">`;
+        return;
+      }
+    }
+  } catch (e) {}
+  lanBox.textContent = location.href.startsWith('http') ? location.href : 'Ejecuta iniciar_k9.bat en tu PC para ver la dirección Wi-Fi y el QR';
+}
+function closeSyncModal(e){
+  if(e&&e.target!==document.getElementById('syncModalOverlay'))return;
+  document.getElementById('syncModalOverlay').classList.add('hidden');
+  document.body.style.overflow='';
+}
+function getExportData(){ return {dogs:state.dogs,sessions:state.sessions,monthColors:state.monthColors,customOptions:state.customOptions,monthlyImprovements:state.monthlyImprovements,updatedAt:state.updatedAt||Date.now(),exportedAt:new Date().toISOString(),version:3}; }
+function exportJSON(){
+  const json=JSON.stringify(getExportData(),null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`k9-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Archivo descargado ✓');
+}
+function onImportFile(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.dogs||!data.sessions)throw new Error();
+      const st=document.getElementById('importFileStatus');
+      st.innerHTML=`✅ <strong>${data.dogs.length}</strong> perros, <strong>${Object.keys(data.sessions).length}</strong> días con sesiones.
+        <div style="display:flex;gap:7px;margin-top:7px">
+          <button class="btn-sync blue" onclick='applyImport(${JSON.stringify(data).replace(/'/g,"\\'")},"merge")'>🔀 Combinar</button>
+          <button class="btn-sync red" onclick='applyImport(${JSON.stringify(data).replace(/'/g,"\\'")},"replace")'>♻️ Reemplazar</button>
+        </div>`;
+    }catch{document.getElementById('importFileStatus').textContent='❌ Archivo inválido.';}
+  };
+  reader.readAsText(file); e.target.value='';
+}
+function applyImport(data,mode){
+  if(mode==='replace'){
+    if(!confirm('¿Reemplazar TODOS los datos actuales?'))return;
+    state.dogs=data.dogs; state.sessions=data.sessions;
+    state.monthColors=data.monthColors||{};
+    state.customOptions=data.customOptions||{tarea:[],modalidad:[],duracion:[],lugar:[],tiempo:[],viento:[],participantes:[]};
+    if(!state.customOptions.modalidad) state.customOptions.modalidad=[];
+    if(!state.customOptions.viento) state.customOptions.viento=[];
+    if(!state.customOptions.participantes) state.customOptions.participantes=[];
+    state.monthlyImprovements=data.monthlyImprovements||{};
+  }else{
+    data.dogs.forEach(dog=>{if(!state.dogs.find(d=>d.id===dog.id))state.dogs.push(dog);});
+    Object.assign(state.sessions,data.sessions);
+    if(data.monthColors)Object.assign(state.monthColors,data.monthColors);
+    if(data.monthlyImprovements)Object.assign(state.monthlyImprovements,data.monthlyImprovements);
+    if(data.customOptions)Object.keys(data.customOptions).forEach(k=>{
+      if(!state.customOptions[k])state.customOptions[k]=[];
+      state.customOptions[k]=[...new Set([...state.customOptions[k],...data.customOptions[k]])];
+    });
+  }
+  if(!state.currentDogId&&state.dogs.length>0)state.currentDogId=state.dogs[0].id;
+  saveAll(); closeSyncModal(); renderDogList(); renderCalendar(); applyMonthColor();
+  showToast('Datos importados y sincronizados ✓');
+}
+function generateSyncCode(){
+  const json=JSON.stringify(getExportData());
+  const code=btoa(unescape(encodeURIComponent(json)));
+  const box=document.getElementById('syncCodeBox');
+  box.textContent=code; box.classList.remove('hidden');
+  document.getElementById('copySyncBtn').style.display='';
+}
+function copySyncCode(){
+  const code=document.getElementById('syncCodeBox').textContent;
+  navigator.clipboard.writeText(code).then(()=>showToast('Código copiado ✓')).catch(()=>{document.execCommand('copy');showToast('Copiado ✓');});
+}
+function importSyncCode(mode){
+  const raw=document.getElementById('syncPasteArea').value.trim();
+  if(!raw){showToast('Pega el código primero');return;}
+  try{
+    const json=decodeURIComponent(escape(atob(raw)));
+    const data=JSON.parse(json);
+    if(!data.dogs||!data.sessions)throw new Error();
+    applyImport(data,mode);
+  }catch{showToast('❌ Código inválido');}
+}
+
+// ════════════════════════════════════════════════
+//  PDF / PRINT
+// ════════════════════════════════════════════════
+let pdfSize='A4',pdfOrient='portrait',pdfContent='month';
+function openPdfModal(){document.getElementById('pdfModalOverlay').classList.remove('hidden');document.body.style.overflow='hidden';}
+function closePdfModal(e){if(e&&e.target!==document.getElementById('pdfModalOverlay'))return;document.getElementById('pdfModalOverlay').classList.add('hidden');document.body.style.overflow='';}
+function selectPdfOpt(el){
+  document.querySelectorAll('#pdfSizeOptions .pdf-opt-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected'); pdfSize=el.dataset.size; pdfOrient=el.dataset.orient;
+}
+function selectPdfContent(el){
+  el.closest('.pdf-options').querySelectorAll('.pdf-opt-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected'); pdfContent=el.dataset.content;
+}
+function doPrint(){
+  closePdfModal();
+  let si=document.getElementById('print-page-style');
+  if(si)si.remove();
+  const style=document.createElement('style');
+  style.id='print-page-style'; style.media='print';
+  style.textContent=`@page{size:${pdfSize} ${pdfOrient};margin:1cm}`;
+  document.head.appendChild(style);
+  if(pdfContent==='detail') printDetailView();
+  else setTimeout(()=>window.print(),200);
+}
+function printDetailView(){
+  if(!state.currentDogId){showToast('Selecciona un perro primero');return;}
+  const dog=state.dogs.find(d=>d.id===state.currentDogId);
+  const year=state.currentYear,month=state.currentMonth;
+  const monthColor=state.monthColors[getMonthColorKey()]||'#1a5c38';
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  let rows='';
+  for(let d=1;d<=daysInMonth;d++){
+    const dateKey=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const sessKey=`${state.currentDogId}_${dateKey}`;
+    const sessions=state.sessions[sessKey];
+    if(!sessions||sessions.length===0)continue;
+    const dateObj=new Date(year,month,d);
+    const dayName=dateObj.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+    rows+=`<div class="pd-day"><div class="pd-day-title" style="background:${monthColor}">${dayName.charAt(0).toUpperCase()+dayName.slice(1)}</div>`;
+    sessions.forEach((s,i)=>{
+      const ri=getRatingInfo(s.rating);
+      const imgFiles=(s.files||[]).filter(f=>f.type&&f.type.startsWith('image/'));
+      rows+=`<div class="pd-session">
+        <div class="pd-session-num" style="background:${monthColor}">Sesión ${i+1}</div>
+        <table class="pd-table">
+          <tr><td class="pd-label">Tarea</td><td>${s.tarea||'—'}</td><td class="pd-label">Modalidad</td><td>${s.modalidad||'—'}</td></tr>
+          ${(s.participantes && s.participantes.length)?`<tr><td class="pd-label">Participantes</td><td colspan="3">${escapeHtml(s.participantes.join(', '))}</td></tr>`:''}
+          <tr><td class="pd-label">Duración</td><td>${s.duracion||'—'}</td><td class="pd-label">Lugar</td><td>${s.lugar||'—'}</td></tr>
+          <tr><td class="pd-label">Tiempo</td><td>${s.tiempo||'—'}</td><td class="pd-label">Viento</td><td>${s.viento||'—'}</td></tr>
+          <tr><td class="pd-label">Valoración</td><td colspan="3"><span style="background:${ri.color};color:${ri.textColor};padding:2px 10px;border-radius:4px;font-weight:700;font-size:.82rem">${ri.label||'—'}</span></td></tr>
+          ${s.notas?`<tr><td class="pd-label">Notas</td><td colspan="3" style="white-space:pre-wrap">${s.notas}</td></tr>`:''}
+          ${imgFiles.length?`<tr><td class="pd-label">Fotos</td><td colspan="3"><div style="display:flex;gap:6px;flex-wrap:wrap">${imgFiles.map(f=>`<img src="${f.data}" style="width:80px;height:80px;object-fit:cover;border-radius:5px">`).join('')}</div></td></tr>`:''}
+        </table>
+      </div>`;
+    });
+    rows+='</div>';
+  }
+  if(!rows)rows='<p style="color:#666;text-align:center;padding:20px">No hay sesiones este mes.</p>';
+  const stats = computeMonthlyStats();
+  const summaryHtml = buildSummaryHTML(stats, true);
+  const dogPhotoHtml=dog.photo?`<img src="${dog.photo}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:10px;border:2px solid ${monthColor}">`:`<span style="font-size:2rem;margin-right:8px">${dog.avatar||'🐕'}</span>`;
+  const pw=window.open('','_blank','width=950,height=750');
+  pw.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+    <title>K9 - ${dog.name} - ${MONTHS[month]} ${year}</title>
+    <style>
+      :root{--primary:${monthColor};--month-color:${monthColor};--surface:#fff;--surface2:#f8faf9;--border:#d1d5db;--text:#1f2937;--text-muted:#6b7280;--radius-sm:8px;--shadow:none}
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:-apple-system,sans-serif;padding:18px;color:#1f2937}
+      .pd-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;margin-bottom:18px;border-bottom:3px solid ${monthColor}}
+      h1{font-size:1.35rem;margin-bottom:2px;display:flex;align-items:center}
+      .sub{font-size:.85rem;color:#6b7280}
+      .pd-month-badge{font-size:1.15rem;font-weight:800;color:${monthColor}}
+      .pd-day{margin-bottom:16px;break-inside:avoid}
+      .pd-day-title{color:#fff;padding:5px 11px;border-radius:5px 5px 0 0;font-weight:700;font-size:.9rem;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .pd-session{border:1px solid #d1d5db;border-top:none;padding:9px}
+      .pd-session:last-child{border-radius:0 0 5px 5px}
+      .pd-session-num{display:inline-block;color:#fff;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:10px;margin-bottom:7px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .pd-table{width:100%;border-collapse:collapse;font-size:.8rem}
+      .pd-table td{padding:4px 7px;border:1px solid #e5e7eb;vertical-align:top}
+      .pd-label{font-weight:700;color:#6b7280;white-space:nowrap;width:80px}
+      .monthly-summary{margin-top:22px;display:flex;flex-direction:column;gap:12px;break-inside:avoid}
+      .summary-header-bar{background:${monthColor};color:#fff;padding:8px 14px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .summary-header-bar h3{font-size:.95rem}
+      .summary-kpi-row{display:flex;gap:14px;font-size:.82rem;font-weight:600}
+      .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .summary-card{border:1px solid #cbd5e1;border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:8px;break-inside:avoid}
+      .summary-card.full-width{grid-column:1 / -1}
+      .summary-card-title{font-size:.8rem;font-weight:700;text-transform:uppercase;color:${monthColor};border-bottom:1px solid #e5e7eb;padding-bottom:5px;display:flex;justify-content:space-between}
+      .summary-table{width:100%;border-collapse:collapse;font-size:.78rem}
+      .summary-table th{text-align:left;padding:5px 6px;background:#f8faf9;color:#6b7280;font-size:.7rem;text-transform:uppercase;border-bottom:1px solid #cbd5e1;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .summary-table td{padding:5px 6px;border-bottom:1px solid #f1f5f2}
+      .summary-table tr.total-row td{font-weight:700;border-top:2px solid #cbd5e1;background:#f8faf9}
+      .summary-bar-wrap{width:100%;background:#e5e7eb;height:6px;border-radius:3px;overflow:hidden;margin-top:2px}
+      .summary-bar-fill{height:100%;background:${monthColor};border-radius:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .improve-list{display:flex;flex-direction:column;gap:6px;font-size:.78rem}
+      .improve-item{padding:6px 9px;border-radius:5px;background:#fffbeb;border-left:4px solid #f59e0b;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .improve-item.bad{background:#fef2f2;border-left-color:#ef4444}
+      .improve-item.note{background:#f0fdf4;border-left-color:#22c55e}
+      .improve-item-meta{font-size:.7rem;font-weight:700;color:#6b7280;display:flex;align-items:center;gap:5px;margin-bottom:2px}
+      .rating-pill-mini{font-size:.62rem;font-weight:700;padding:1px 5px;border-radius:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      @page{size:${pdfSize} ${pdfOrient};margin:1cm}
+      @media print{body{padding:0}.pd-day,.summary-card{break-inside:avoid}img{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+    </style></head><body>
+    <div class="pd-header">
+      <div>
+        <h1>${dogPhotoHtml} <div><div>${dog.name}</div><div class="sub">${dog.breed?dog.breed+' · ':''}${dog.birth?'Nac: '+dog.birth+' · ':''}Diario K9 de Búsqueda y Rescate</div></div></h1>
+      </div>
+      <div class="pd-month-badge">${MONTHS[month]} ${year}</div>
+    </div>
+    ${rows}
+    <div class="monthly-summary">${summaryHtml}</div>
+  </body></html>`);
+  pw.document.close();
+  setTimeout(()=>pw.print(),400);
+}
+
+// ════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ════════════════════════════════════════════════
+//  START
+// ════════════════════════════════════════════════
+init();
+</script>
 </body>
 </html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GasNow Europa — Precios de Combustibles en Tiempo Real (España, Francia, Portugal y UE)</title>
+  <meta name="description" content="Consulta los precios actualizados de gasolina 95, 98, diésel y GLP en tiempo real en España, Francia, Portugal y los 27 países de la Unión Europea con datos oficiales.">
+  
+  <!-- Favicon y PWA -->
+  <link rel="icon" type="image/jpeg" href="logo.jpg">
+  <link rel="apple-touch-icon" href="logo.jpg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#070a12">
+
+  <!-- Google Fonts: Outfit (Titulares) e Inter (Datos) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Estilos de la aplicación -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="view-map-active">
+
+  <!-- Cabecera Principal (Sin logo, adaptada a pantalla Redmi Note 13 Pro) -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-text">
+        <h1 class="app-brand-title">⛽ GasNow</h1>
+      </div>
+    </div>
+
+    <div class="header-status-group">
+      <div class="header-actions">
+        <!-- Selector de País Elegante -->
+        <div class="country-select-container">
+          <select class="select-country-header" id="country-select" aria-label="Seleccionar País">
+            <option value="ES" selected>🇪🇸 ES</option>
+            <option value="FR">🇫🇷 FR</option>
+            <option value="PT">🇵🇹 PT</option>
+            <option value="EU">🇪🇺 UE</option>
+          </select>
+        </div>
+
+        <button class="btn-icon-header btn-europe" id="btn-open-europe" title="Ranking oficial de los 27 países de Europa">
+          <span>🇪🇺</span>
+          <span class="btn-text-label">Ranking UE</span>
+        </button>
+
+        <button class="btn-icon-header btn-accent" id="btn-open-calc" title="Calculadora de llenado de depósito">
+          <span>🧮</span>
+          <span class="btn-text-label">Calculadora</span>
+        </button>
+
+        <button class="btn-icon-header" id="btn-open-favs" title="Ver mis gasolineras favoritas">
+          <span>⭐</span>
+          <span class="btn-text-label">Favoritas</span>
+          <span class="badge-counter" id="fav-count-badge" style="display: none;">0</span>
+        </button>
+
+        <button class="btn-icon-header" id="btn-refresh" title="Actualizar datos oficiales">
+          <span>🔄</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Barra de Filtros y Combustibles Adaptada a Móviles y Desktop -->
+  <section class="filters-bar">
+    <!-- Selector rápido de carburante (Swipe horizontal táctil - Diésel por defecto) -->
+    <div class="fuel-pills-row" id="fuel-selector-pills">
+      <!-- Generado dinámicamente -->
+    </div>
+
+    <!-- Fila Principal de Búsqueda y Región -->
+    <div class="filters-main-row">
+      <button class="btn-gps-trigger" id="btn-gps" title="Buscar gasolineras más cercanas a mi GPS">
+        <span>📍</span>
+        <span class="gps-btn-text">Mi GPS</span>
+      </button>
+
+      <select class="select-custom select-region-main" id="province-select" aria-label="Seleccionar Provincia o Región">
+        <!-- Provincias cargadas desde provinces.js -->
+      </select>
+
+      <div class="search-input-wrap">
+        <input type="text" class="input-search-custom" id="search-input" placeholder="🔍 Buscar calle, marca...">
+      </div>
+
+      <button class="btn-toggle-filters" id="btn-toggle-filters" title="Mostrar más filtros de búsqueda">
+        <span>⚙️</span>
+        <span class="filters-toggle-label">Filtros</span>
+      </button>
+    </div>
+
+    <!-- Cajón de Filtros Secundarios / Avanzados (Colapsable en móvil para no tapar el mapa) -->
+    <div class="filters-drawer-content" id="filters-drawer">
+      <select class="select-custom" id="municipality-select" aria-label="Seleccionar Municipio">
+        <option value="">Todos los municipios</option>
+      </select>
+
+      <select class="select-custom" id="brand-filter" aria-label="Filtrar por Marca">
+        <option value="ALL">Todas las marcas</option>
+        <option value="LOWCOST">Solo Low Cost</option>
+        <option value="TRADITIONAL">Solo Tradicionales</option>
+      </select>
+
+      <select class="select-custom" id="radius-filter" aria-label="Radio de distancia">
+        <option value="0">Toda la región</option>
+        <option value="5">Radio 5 km (GPS)</option>
+        <option value="10">Radio 10 km (GPS)</option>
+        <option value="20">Radio 20 km (GPS)</option>
+        <option value="50">Radio 50 km (GPS)</option>
+      </select>
+
+      <select class="select-custom" id="sort-filter" aria-label="Ordenar resultados">
+        <option value="price">Más baratas primero</option>
+        <option value="distance">Más cercanas (GPS)</option>
+      </select>
+
+      <label class="toggle-switch-wrapper" title="Ocultar las que estén cerradas en este momento">
+        <input type="checkbox" id="filter-open-only">
+        <span>Solo abiertas</span>
+      </label>
+    </div>
+  </section>
+
+  <!-- Contenedor Principal (Panel Dividido: Lista + Mapa) -->
+  <main class="main-container">
+    <!-- Panel Lateral: Listado de Tarjetas -->
+    <aside class="sidebar-panel">
+      <div class="sidebar-header">
+        <div class="results-meta">
+          <h2>Estaciones de Servicio</h2>
+          <span id="results-count">Cargando estaciones...</span>
+        </div>
+
+        <div class="tabs-group">
+          <button class="tab-btn active" data-tab="all">Todas</button>
+          <button class="tab-btn" data-tab="cheapest">👑 Top 15</button>
+          <button class="tab-btn" data-tab="favorites">⭐ Favoritas</button>
+        </div>
+      </div>
+
+      <div class="stations-list-scroll" id="stations-list-container">
+        <!-- Tarjetas inyectadas por JS -->
+      </div>
+    </aside>
+
+    <!-- Panel del Mapa Interactivo -->
+    <section class="map-panel">
+      <div id="map"></div>
+    </section>
+  </main>
+
+  <!-- Selector Móvil de Vista (Mapa / Lista / Precios UE-27) -->
+  <div class="mobile-view-toggle">
+    <button class="btn-mobile-toggle active" id="view-toggle-map">🗺️ Mapa</button>
+    <button class="btn-mobile-toggle" id="view-toggle-list">📋 Lista</button>
+    <button class="btn-mobile-toggle btn-mobile-eu" id="view-toggle-eu" onclick="App.openEuropeModal()">🇪🇺 UE-27</button>
+  </div>
+
+  <!-- Modal: Calculadora de Repostaje y Ahorro -->
+  <div class="modal-overlay" id="calc-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>🧮 Calculadora de Repostaje</h3>
+        <button class="btn-close-modal" onclick="App.closeModal('calc-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="calc-station-banner">
+          <div class="calc-station-meta">
+            <span class="calc-fuel-badge" id="calc-fuel-name">🛢️ Diésel / Gasóleo A</span>
+            <strong class="calc-station-name-text" id="calc-station-name">Media de la zona</strong>
+          </div>
+          <div class="calc-station-price-box">
+            <small>Precio aplicado</small>
+            <strong id="calc-applied-price">-- €/L</strong>
+          </div>
+        </div>
+        <div id="calc-adblue-hint" class="calc-adblue-hint" style="display: none;"></div>
+
+        <div class="calc-field-group">
+          <label class="calc-label">Capacidad de tu depósito:</label>
+          <div class="presets-row">
+            <button type="button" class="btn-preset-tank" data-liters="15">15 L</button>
+            <button type="button" class="btn-preset-tank" data-liters="40">40 L</button>
+            <button type="button" class="btn-preset-tank active" data-liters="50">50 L</button>
+            <button type="button" class="btn-preset-tank" data-liters="60">60 L</button>
+            <button type="button" class="btn-preset-tank" data-liters="70">70 L</button>
+          </div>
+          <input type="number" id="calc-tank-capacity" class="select-custom" value="50" min="10" max="150" style="margin-top: 0.4rem;" placeholder="Litros de capacidad">
+        </div>
+
+        <div class="calc-field-group">
+          <div class="calc-slider-header">
+            <label class="calc-label">Nivel actual del depósito:</label>
+            <span id="calc-level-val-text" class="calc-slider-val">0% (Llenar depósito)</span>
+          </div>
+          <input type="range" id="calc-fuel-level" class="slider-custom" min="0" max="90" step="5" value="0">
+        </div>
+
+        <div class="calc-result-card">
+          <div class="result-main-row">
+            <div>
+              <span class="calc-label">Coste total del llenado</span>
+              <div class="result-main-price" id="calc-res-cost">-- €</div>
+            </div>
+            <div style="text-align: right;">
+              <span class="calc-label">Litros a repostar</span>
+              <div class="result-main-liters" id="calc-res-liters">-- L</div>
+            </div>
+          </div>
+
+          <div class="calc-breakdown-grid">
+            <div class="breakdown-box">
+              <span class="b-label">Coste con precio medio</span>
+              <span class="b-val" id="calc-cost-avg">-- €</span>
+            </div>
+            <div class="breakdown-box">
+              <span class="b-label" style="color: #34d399;">Ahorro en este llenado</span>
+              <span class="b-val text-green" id="calc-res-save-avg">0.00 €</span>
+            </div>
+            <div class="breakdown-box span-2" style="grid-column: span 2; border-top: 1px dashed rgba(255,255,255,0.12); padding-top: 0.5rem; margin-top: 0.2rem;">
+              <span class="b-label">Ahorro anual estimado (2 repostajes/mes)</span>
+              <span class="b-val" style="color: var(--accent-amber);" id="calc-res-save-annual">0.00 € al año</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Mis Gasolineras Favoritas -->
+  <div class="modal-overlay" id="favs-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>⭐ Mis Gasolineras Favoritas</h3>
+        <button class="btn-close-modal" onclick="App.closeModal('favs-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="favs-list" id="favs-list-container">
+          <!-- Inyectado dinámicamente -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Comparativa y Ranking Europa (UE-27) -->
+  <div class="modal-overlay" id="europe-modal">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <h3>🇪🇺 Precios de Combustibles en Europa (UE-27)</h3>
+        <button class="btn-close-modal" onclick="App.closeModal('europe-modal')">&times;</button>
+      </div>
+      <div class="modal-body" id="europe-modal-content">
+        <!-- Inyectado dinámicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay de Carga -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loader-spinner"></div>
+    <span style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 600; color: #fff;">Consultando Ministerio (MITECO)...</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="js/provinces.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/favorites.js"></script>
+  <script src="js/calculator.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
